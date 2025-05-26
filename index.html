@@ -75,6 +75,19 @@
             --md-sys-typescale-body-large-font-weight: 400;
             --md-sys-typescale-body-large-font-size: 16px;
             --md-sys-typescale-body-large-line-height: 24px;
+
+            /* 新增或修改的用于悬停状态层的颜色变量 */
+            --md-sys-color-on-surface-alpha-08: rgba(28, 27, 31, 0.08); /* on-surface 的 8% 透明度 */
+            --md-sys-color-primary-alpha-08: rgba(103, 80, 164, 0.08); /* primary 的 8% 透明度 */
+
+            /* 用于按钮和下拉菜单的通用变量 */
+            --button-height: 36px; /* 约等于 h-9 */
+            --button-padding-x: 16px; /* 约等于 px-4 */
+            --button-padding-y: 8px; /* 约等于 py-2 */
+            --button-font-size: 14px; /* text-sm */
+            --button-font-weight: 500; /* font-medium */
+            --button-border-radius: var(--md-sys-shape-corner-small); /* rounded-lg */
+            --button-shadow-color: rgba(0, 0, 0, 0.03); /* shadow-black/5 */
         }
 
         body {
@@ -99,7 +112,7 @@
             box-shadow: var(--md-sys-elevation-level2);
             display: flex;
             flex-direction: column;
-            gap: 28px;
+            gap: 20px;
         }
 
         h1 {
@@ -149,7 +162,6 @@
             margin-bottom: 8px;
         }
 
-        /* 自定义按钮样式 */
         button {
             border: none;
             outline: none;
@@ -159,7 +171,7 @@
             font-weight: 700;
             color: #fff;
             border-radius: 5px;
-            transition: all ease 0.1s;
+            transition: all ease 0.3s;
             box-shadow: 0px 5px 0px 0px #a29bfe;
             cursor: pointer;
             display: flex;
@@ -169,7 +181,6 @@
         }
 
         button:active {
-            transform: translateY(5px);
             box-shadow: 0px 0px 0px 0px #a29bfe;
         }
 
@@ -183,6 +194,175 @@
         button .icon {
             font-size: 18px;
         }
+        
+        .rename-pattern-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 0;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .rename-pattern-container label {
+            font-size: 14px;
+            color: var(--md-sys-color-on-surface-variant);
+        }
+
+        /* 模拟下拉选择框的样式 */
+        .custom-dropdown-container {
+            position: relative;
+            display: inline-block;
+            min-width: 200px;
+            z-index: 10; /* 确保下拉菜单在其他内容之上 */
+        }
+
+        .dropdown-trigger {
+            display: inline-flex;
+            align-items: center;
+            justify-content: space-between; /* 使文本和图标两端对齐 */
+            white-space: nowrap;
+            border-radius: var(--button-border-radius);
+            font-size: var(--button-font-size);
+            font-weight: var(--button-font-weight);
+            transition: color var(--md-sys-motion-duration-short2) var(--md-sys-motion-easing-standard),
+                        background-color var(--md-sys-motion-duration-short2) var(--md-sys-motion-easing-standard),
+                        border-color var(--md-sys-motion-duration-short2) var(--md-sys-motion-easing-standard),
+                        box-shadow var(--md-sys-motion-duration-short2) var(--md-sys-motion-easing-standard);
+            outline-offset: 2px; /* 焦点轮廓偏移 */
+            outline: none; /* 移除默认 outline */
+            
+            border: 1px solid var(--md-sys-color-outline); /* border border-input */
+            background-color: var(--md-sys-color-surface); /* bg-background */
+            color: var(--md-sys-color-on-surface); /* 文本颜色 */
+            box-shadow: 0px 1px 2px var(--button-shadow-color); /* shadow-sm shadow-black/5 */
+            height: var(--button-height);
+            padding: var(--button-padding-y) var(--button-padding-x);
+            cursor: pointer;
+            width: 100%; /* 填充父容器 */
+            box-sizing: border-box; /* 包含 padding 和 border */
+        }
+
+        /* 悬停效果 */
+        .dropdown-trigger:hover {
+            background-color: var(--md-sys-color-surface-variant); /* hover:bg-accent (M3: surface-variant) */
+            color: var(--md-sys-color-on-surface-variant); /* hover:text-accent-foreground (M3: on-surface-variant) */
+            border-color: var(--md-sys-color-outline); /* 悬停时边框通常不变 */
+            box-shadow: var(--md-sys-elevation-level2); /* 轻微提升阴影 */
+        }
+
+        /* 焦点可见轮廓 */
+        .dropdown-trigger:focus-visible {
+            outline: 2px solid var(--md-sys-color-primary); /* focus-visible:outline-2 focus-visible:outline-ring/70 */
+            outline-offset: 2px;
+            border-color: var(--md-sys-color-primary); /* 焦点时边框变为主题色 */
+            box-shadow: 0 0 0 4px var(--md-sys-color-primary-container); /* 焦点光晕 */
+        }
+
+        /* 激活状态 */
+        .dropdown-trigger[data-state="open"] {
+             background-color: var(--md-sys-color-primary-container); /* 打开时背景变为 primary container */
+             color: var(--md-sys-color-on-primary-container); /* 打开时文本变为 on primary container */
+             border-color: var(--md-sys-color-primary); /* 打开时边框变为 primary */
+             box-shadow: var(--md-sys-elevation-level2); /* 打开时保持提升阴影 */
+        }
+
+        .dropdown-trigger svg {
+            margin-left: 8px; /* ms-2 */
+            margin-right: -4px; /* -me-1 (考虑到 px-4，这里调整一下) */
+            opacity: 0.6;
+            transition: transform var(--md-sys-motion-duration-short2) var(--md-sys-motion-easing-standard), opacity var(--md-sys-motion-duration-short2) var(--md-sys-motion-easing-standard);
+        }
+
+        .dropdown-trigger[data-state="open"] svg {
+            transform: rotate(180deg); /* 打开时箭头旋转 */
+            opacity: 1;
+            color: var(--md-sys-color-on-primary-container); /* 打开时箭头颜色跟随文本 */
+        }
+        .dropdown-trigger:hover svg {
+            color: var(--md-sys-color-on-surface-variant); /* 悬停时箭头颜色 */
+        }
+        .dropdown-trigger:focus-visible svg {
+            color: var(--md-sys-color-primary); /* 焦点时箭头颜色 */
+        }
+
+
+        .dropdown-content {
+            position: absolute;
+            top: calc(100% + 8px); /* 位于按钮下方，有间距 */
+            left: 0;
+            background-color: var(--md-sys-color-surface);
+            border-radius: var(--md-sys-shape-corner-medium); /* 圆角 */
+            box-shadow: var(--md-sys-elevation-level3); /* 更高的阴影表示浮动 */
+            min-width: 100%; /* 宽度与按钮保持一致 */
+            padding: 8px;
+            display: none; /* 默认隐藏 */
+            flex-direction: column;
+            gap: 4px; /* 选项之间的间距 */
+            z-index: 11; /* 确保在按钮和状态层之上 */
+            opacity: 0;
+            transform: translateY(-10px);
+            transition: opacity var(--md-sys-motion-duration-medium1) var(--md-sys-motion-easing-decelerate),
+                        transform var(--md-sys-motion-duration-medium1) var(--md-sys-motion-easing-decelerate);
+        }
+
+        .dropdown-content.open {
+            display: flex; /* 显示 */
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .dropdown-item {
+            display: flex;
+            align-items: center;
+            padding: 8px 12px;
+            border-radius: var(--md-sys-shape-corner-small);
+            color: var(--md-sys-color-on-surface);
+            font-size: var(--button-font-size);
+            cursor: pointer;
+            transition: background-color var(--md-sys-motion-duration-short2) var(--md-sys-motion-easing-standard),
+                        color var(--md-sys-motion-duration-short2) var(--md-sys-motion-easing-standard);
+            position: relative; /* 用于状态层 */
+            overflow: hidden; /* 裁剪掉超出边框的伪元素 */
+        }
+        .dropdown-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: transparent;
+            border-radius: inherit;
+            transition: background-color var(--md-sys-motion-duration-short2) var(--md-sys-motion-easing-standard);
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        /* 选项悬停和焦点效果 */
+        .dropdown-item:hover::before,
+        .dropdown-item:focus-visible::before {
+            background-color: var(--md-sys-color-on-surface-alpha-08); /* 悬停和焦点状态层 */
+        }
+
+        .dropdown-item:hover {
+            color: var(--md-sys-color-on-surface); /* 悬停时文本颜色不变 */
+        }
+
+        .dropdown-item:focus-visible {
+            outline: none; /* 移除默认焦点轮廓 */
+            color: var(--md-sys-color-primary); /* 焦点时文本颜色变为主题色 */
+            background-color: var(--md-sys-color-primary-container); /* 焦点时背景色变为主题容器色 */
+        }
+        /* 选中状态 */
+        .dropdown-item.selected {
+            background-color: var(--md-sys-color-primary-container);
+            color: var(--md-sys-color-on-primary-container);
+            font-weight: 500;
+        }
+        .dropdown-item.selected::before {
+             background-color: transparent; /* 选中状态不再显示状态层 */
+        }
+
 
         .section-card {
             background-color: var(--md-sys-color-surface);
@@ -200,6 +380,30 @@
             overflow-y: auto;
             padding-right: 4px;
         }
+        .file-item-placeholder {
+            color: var(--md-sys-color-on-surface-variant);
+            padding: 12px 16px;
+            font-style: italic;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+        }
+        .file-item-placeholder p {
+            margin: 2px 0;
+            line-height: 1.4;
+        }
+        .file-item-placeholder code {
+            background-color: var(--md-sys-color-surface-variant);
+            color: var(--md-sys-color-on-surface-variant);
+            padding: 2px 6px;
+            border-radius: var(--md-sys-shape-corner-extra-small);
+            font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace;
+            font-size: 0.9em;
+        }
+
 
         .file-item {
             background-color: var(--md-sys-color-surface-container-high, var(--md-sys-color-surface-variant));
@@ -212,13 +416,28 @@
             display: flex;
             align-items: center;
             gap: 10px;
-            /* M3 悬停效果 */
             transition: background-color var(--md-sys-motion-duration-short2) var(--md-sys-motion-easing-standard),
                         border-color var(--md-sys-motion-duration-short2) var(--md-sys-motion-easing-standard);
         }
         .file-item .icon {
             color: var(--md-sys-color-primary);
         }
+
+        /* 新增：待处理文件的样式 */
+        .file-item.pending {
+            background-color: var(--md-sys-color-surface-variant);
+            border-color: var(--md-sys-color-outline);
+            color: var(--md-sys-color-on-surface-variant);
+            opacity: 0.8;
+        }
+        .file-item.pending .icon {
+            color: var(--md-sys-color-outline);
+        }
+        /* 新增：元数据读取失败文件的图标颜色 */
+        .file-item.error .icon {
+            color: var(--md-sys-color-error);
+        }
+
 
         .file-item:hover {
             background-color: var(--md-sys-color-primary-container);
@@ -263,7 +482,6 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
-        /* 自定义滚动条 (M3 风格 - 柔和) */
         ::-webkit-scrollbar {
             width: 8px;
             height: 8px;
@@ -281,7 +499,44 @@
             background-color: var(--md-sys-color-on-surface-variant);
         }
 
-        /* 响应式调整 */
+        /* Loading Overlay Styles */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent black */
+            display: none; /* Hidden by default */
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            color: white;
+            font-size: 1.2em;
+            z-index: 9999; /* Ensure it's on top of everything */
+            backdrop-filter: blur(5px); /* Optional: blur background content */
+            -webkit-backdrop-filter: blur(5px); /* For Safari */
+        }
+
+        .loading-overlay.visible {
+            display: flex;
+        }
+
+        .spinner {
+            border: 4px solid var(--md-sys-color-primary-container); /* Light grey */
+            border-top: 4px solid var(--md-sys-color-primary); /* Primary color */
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin-bottom: 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
         @media (max-width: 600px) {
             body {
                 padding: 16px;
@@ -299,16 +554,26 @@
             h2 {
                 font-size: 20px;
             }
-            #controls {
+            #controls, .rename-pattern-container {
                 flex-direction: column;
                 align-items: stretch;
             }
-            button {
+            button, .custom-dropdown-container {
+                width: 100%;
+                box-sizing: border-box;
+            }
+            .dropdown-trigger {
+                width: 100%;
+            }
+            .dropdown-content {
                 width: 100%;
             }
             .file-item {
                 padding: 10px 12px;
                 border-radius: var(--md-sys-shape-corner-medium);
+            }
+             .file-item-placeholder {
+                font-size: 14px;
             }
         }
     </style>
@@ -332,12 +597,27 @@
             </button>
         </div>
 
+        <div class="rename-pattern-container">
+            <label for="rename-pattern-button">命名模式:</label>
+            <div class="custom-dropdown-container">
+                <button class="dropdown-trigger" type="button" id="rename-pattern-button" aria-haspopup="menu" aria-expanded="false" data-state="closed">
+                    <span id="selected-pattern-text">艺术家 - 歌曲名 (默认)</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="dropdown" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg>
+                </button>
+
+                <div class="dropdown-content" id="rename-pattern-dropdown">
+                    <div class="dropdown-item selected" data-value="artist-title">艺术家 - 歌曲名 (默认)</div>
+                    <div class="dropdown-item" data-value="title-artist">歌曲名 - 艺术家名</div>
+                    <div class="dropdown-item" data-value="indexed-artist-title">序号. 艺术家 - 歌曲名</div>
+                    <div class="dropdown-item" data-value="indexed-title-artist">序号. 歌曲名 - 艺术家名</div>
+                </div>
+            </div>
+        </div>
+
         <div class="section-card">
             <h2><span class="icon" aria-hidden="true">📋</span>待处理文件:</h2>
             <div id="fileList">
-                未选择文件或目录
-                支持的格式: mp3, flac, wav, ogg, m4a, aac, wma, wv, aiff, aif, opus
-            </div>
+                </div>
         </div>
 
         <div class="section-card">
@@ -346,6 +626,127 @@
             </div>
         </div>
     </div>
+
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="loading-overlay">
+        <div class="spinner"></div>
+        <p>正在处理，请稍候...</p>
+    </div>
+
+    <script>
+        /**
+         * 初始化自定义下拉选择框的交互逻辑。
+         */
+        function initializeCustomDropdown() {
+            const dropdownTrigger = document.getElementById('rename-pattern-button');
+            const dropdownContent = document.getElementById('rename-pattern-dropdown');
+            const selectedPatternText = document.getElementById('selected-pattern-text');
+            const dropdownItems = dropdownContent.querySelectorAll('.dropdown-item');
+
+            /**
+             * 切换下拉菜单的显示状态。
+             */
+            function toggleDropdown() {
+                const isOpen = dropdownTrigger.getAttribute('aria-expanded') === 'true';
+                if (isOpen) {
+                    dropdownTrigger.setAttribute('aria-expanded', 'false');
+                    dropdownTrigger.dataset.state = 'closed';
+                    dropdownContent.classList.remove('open');
+                } else {
+                    dropdownTrigger.setAttribute('aria-expanded', 'true');
+                    dropdownTrigger.dataset.state = 'open';
+                    dropdownContent.classList.add('open');
+                    // 当下拉菜单打开时，确保第一个可聚焦项获得焦点，以便键盘导航
+                    if (dropdownItems.length > 0) {
+                        dropdownItems[0].focus();
+                    }
+                }
+            }
+
+            /**
+             * 处理选项点击事件。
+             * @param {Event} event - 点击事件对象。
+             */
+            function handleItemClick(event) {
+                const clickedItem = event.currentTarget;
+                const newValue = clickedItem.dataset.value;
+                const newText = clickedItem.textContent;
+
+                dropdownItems.forEach(item => item.classList.remove('selected'));
+                clickedItem.classList.add('selected');
+
+                selectedPatternText.textContent = newText;
+                dropdownTrigger.dataset.value = newValue;
+
+                toggleDropdown();
+                dropdownTrigger.focus(); // 选中后返回焦点到触发器
+
+                // 派发自定义事件，通知 renderer.js 命名模式已更改
+                const customEvent = new CustomEvent('rename-pattern-change', {
+                    detail: { value: newValue, text: newText }
+                });
+                dropdownTrigger.dispatchEvent(customEvent);
+            }
+
+            /**
+             * 处理点击外部区域关闭下拉菜单。
+             * @param {Event} event - 点击事件对象。
+             */
+            function handleClickOutside(event) {
+                if (!dropdownTrigger.contains(event.target) && !dropdownContent.contains(event.target)) {
+                    if (dropdownTrigger.getAttribute('aria-expanded') === 'true') {
+                        toggleDropdown();
+                    }
+                }
+            }
+
+            // 绑定事件监听器
+            dropdownTrigger.addEventListener('click', toggleDropdown);
+            dropdownItems.forEach(item => {
+                item.addEventListener('click', handleItemClick);
+                item.addEventListener('keydown', (event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault();
+                        handleItemClick(event);
+                    } else if (event.key === 'ArrowDown') {
+                        event.preventDefault();
+                        const nextItem = event.currentTarget.nextElementSibling;
+                        if (nextItem && nextItem.classList.contains('dropdown-item')) {
+                            nextItem.focus();
+                        } else {
+                            dropdownItems[0].focus(); // 循环到第一个
+                        }
+                    } else if (event.key === 'ArrowUp') {
+                        event.preventDefault();
+                        const prevItem = event.currentTarget.previousElementSibling;
+                        if (prevItem && prevItem.classList.contains('dropdown-item')) {
+                            prevItem.focus();
+                        } else {
+                            dropdownItems[dropdownItems.length - 1].focus(); // 循环到最后一个
+                        }
+                    } else if (event.key === 'Escape') {
+                        event.preventDefault();
+                        toggleDropdown();
+                        dropdownTrigger.focus();
+                    }
+                });
+                // 使每个选项可被聚焦
+                item.setAttribute('tabindex', '0');
+            });
+            document.addEventListener('click', handleClickOutside);
+
+            // 确保初始选中状态正确
+            const initialSelectedValue = 'artist-title';
+            const initialSelectedItem = dropdownContent.querySelector(`.dropdown-item[data-value="${initialSelectedValue}"]`);
+            if (initialSelectedItem) {
+                selectedPatternText.textContent = initialSelectedItem.textContent;
+                dropdownTrigger.dataset.value = initialSelectedValue;
+                initialSelectedItem.classList.add('selected');
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', initializeCustomDropdown);
+    </script>
     <script src="renderer.js"></script>
 </body>
 </html>
