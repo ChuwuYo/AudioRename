@@ -78,12 +78,6 @@ npm run dist
 
 欢迎任何形式的贡献！如果您有改进建议或发现了 Bug，请随时提交 Pull Request 或创建 Issue。
 
-1.  Fork 本仓库。
-2.  创建您的功能分支 (`git checkout -b feature/AmazingFeature`)。
-3.  提交您的更改 (`git commit -m 'Add some AmazingFeature'`)。
-4.  推送到远程分支 (`git push origin feature/AmazingFeature`)。
-5.  打开 Pull Request。
-
 ## 📄 许可证
 
 本项目采用 [GNU Affero General Public License v3.0](https://www.google.com/search?q=LICENSE) 许可。
