@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>音频文件重命名工具</title>
+    <title>音频批量重命名工具</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -163,6 +163,8 @@
         }
 
         button {
+            position: relative; /* 为波纹效果添加 */
+            overflow: hidden; /* 隐藏超出按钮边界的波纹 */
             border: none;
             outline: none;
             background-color: #6c5ce7;
@@ -171,7 +173,7 @@
             font-weight: 700;
             color: #fff;
             border-radius: 5px;
-            transition: all ease 0.3s;
+            transition: all ease 0.3s, box-shadow 0.1s ease-out; /* 更新 transition */
             box-shadow: 0px 5px 0px 0px #a29bfe;
             cursor: pointer;
             display: flex;
@@ -181,7 +183,32 @@
         }
 
         button:active {
-            box-shadow: 0px 0px 0px 0px #a29bfe;
+            box-shadow: 0px 2px 0px 0px #a29bfe; /* 调整 active 状态的阴影，使其看起来被按下 */
+            transform: translateY(3px); /* 轻微下移，增强按下感 */
+        }
+
+        /* 波纹效果 */
+        button::after {
+            content: "";
+            background: rgba(255, 255, 255, 0.4);
+            display: block;
+            position: absolute;
+            border-radius: 50%;
+            padding-top: 350%;
+            padding-left: 350%;
+            margin-left: -20px !important;
+            margin-top: -120%;
+            opacity: 0;
+            transition: all 0.8s ease-out;
+        }
+
+        button:active::after {
+            padding-top: 0;
+            padding-left: 0;
+            margin-left: 0;
+            margin-top: 0;
+            opacity: 1;
+            transition: none; /* 点击时立即显示波纹 */
         }
 
         button:disabled {

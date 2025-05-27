@@ -125,7 +125,7 @@ function updateFileList() {
         const icon = document.createElement('span');
         icon.classList.add('icon');
         icon.setAttribute('aria-hidden', 'true');
-        
+
         const textSpan = document.createElement('span');
         textSpan.classList.add('file-name-text');
         let currentFileName = path.basename(filePath); // 原始文件名
@@ -146,15 +146,15 @@ function updateFileList() {
                 div.classList.add('error'); // 添加错误样式类
                 div.classList.remove('pending'); // 移除待处理样式
                 // 如果元数据获取失败，显示错误信息
-                const errorMsg = fileData.message ? fileData.message.substring(0,50)+'...' : '未知错误';
+                const errorMsg = fileData.message ? fileData.message.substring(0, 50) + '...' : '未知错误';
                 textSpan.textContent = `${currentFileName} (元数据读取失败: ${errorMsg})`;
                 div.style.borderColor = 'var(--md-sys-color-error)'; // 错误时显示错误边框
             } else {
-                 icon.textContent = '⏳ '; // 正在等待图标
-                 // 未知状态或正在等待元数据
-                 textSpan.textContent = currentFileName + " (等待元数据...)";
-                 div.classList.add('pending'); // 添加待处理样式类
-                 div.classList.remove('error'); // 移除错误样式
+                icon.textContent = '⏳ '; // 正在等待图标
+                // 未知状态或正在等待元数据
+                textSpan.textContent = currentFileName + " (等待元数据...)";
+                div.classList.add('pending'); // 添加待处理样式类
+                div.classList.remove('error'); // 移除错误样式
             }
         } else {
             icon.textContent = '⏳ '; // 正在等待图标
@@ -194,8 +194,8 @@ function toggleControls(disabled) {
     } else {
         // 否则，根据文件状态判断是否启用重命名按钮
         const canRename = selectedFilePaths.length > 0 &&
-                          filesWithMetadata.length === selectedFilePaths.length &&
-                          filesWithMetadata.some(f => f.status === 'success' && path.basename(f.filePath) !== f.cleanedFileName);
+            filesWithMetadata.length === selectedFilePaths.length &&
+            filesWithMetadata.some(f => f.status === 'success' && path.basename(f.filePath) !== f.cleanedFileName);
         renameBtn.disabled = !canRename;
     }
 }
@@ -373,7 +373,7 @@ ipcRenderer.on('progress-update', (event, data) => {
         // 找到文本节点并更新其内容
         const textNode = Array.from(lastLogEntry.childNodes).find(node => node.nodeType === Node.TEXT_NODE);
         if (textNode) {
-             textNode.nodeValue = ` ${message}`; // 直接更新文本内容
+            textNode.nodeValue = ` ${message}`; // 直接更新文本内容
         } else {
             // 备用方案：如果找不到文本节点，直接更新整个P标签的内容（可能覆盖图标）
             lastLogEntry.textContent = `⏳ ${message}`;

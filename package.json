@@ -1,6 +1,6 @@
 {
   "name": "audiorename",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
@@ -16,7 +16,7 @@
   },
   "build": {
     "appId": "com.yourcompany.audiorename",
-    "productName": "音频重命名工具",
+    "productName": "音频批量重命名工具",
     "copyright": "Copyright © 2025 ChuwuYo",
     "files": [
       "**/*",
@@ -34,14 +34,14 @@
         "portable"
       ],
       "requestedExecutionLevel": "asInvoker",
-      "icon": "assets/icon.ico",
+      "icon": "assets/music.ico",
       "compression": "maximum"
     },
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
       "artifactName": "${productName} Setup ${version}.${ext}",
-      "installerIcon": "assets/icon.ico",
+      "installerIcon": "assets/music.ico",
       "uninstallDisplayName": "${productName} ${version}"
     },
     "portable": {

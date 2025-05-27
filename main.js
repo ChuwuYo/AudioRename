@@ -1,6 +1,6 @@
 // 主进程，负责处理窗口创建、文件对话框、元数据读取和文件重命名等核心逻辑。
 const { app, BrowserWindow, dialog, ipcMain } = require('electron');
-const path =require('path');
+const path = require('path');
 const fs = require('fs').promises; // 使用 fs.promises 以支持异步操作
 const mm = require('music-metadata'); // 导入 music-metadata 库
 
@@ -52,7 +52,7 @@ function cleanFilename(artist, title, ext, pattern, index = null) {
         newFilename = `${fallbackName}${ext}`.replace(illegalChars, '_').replace(/^[. ]+|[. ]+$/g, '');
         // 再次检查，如果仍然只剩下扩展名，则强制使用通用备用名
         if (newFilename === ext || newFilename.trim() === ext || newFilename.trim() === '') {
-             newFilename = `UntitledTrack${ext}`;
+            newFilename = `UntitledTrack${ext}`;
         }
     }
     return newFilename;
@@ -70,10 +70,10 @@ const createMainWindow = () => {
         minHeight: 600,
         webPreferences: {
             nodeIntegration: true,    // 允许在渲染进程中使用 Node.js API
-            contextIsolation: false,  // 禁用上下文隔离 (不推荐，但按要求)
-            // preload: path.join(__dirname, 'preload.js') // 不再需要 preload 脚本
+            contextIsolation: false,  // 禁用上下文隔离
         },
-        autoHideMenuBar: true
+        autoHideMenuBar: true,
+        icon: path.join(__dirname, 'assets', 'Music.ico')
     });
 
     mainWindow.loadFile('index.html');
@@ -254,11 +254,11 @@ ipcMain.on('get-file-metadata', async (event, { filePath, pattern, fileIndex, to
     }
     // 如果总文件数大于0，发送进度更新
     if (totalFiles > 0) {
-      event.reply('progress-update', {
-          current: fileIndex + 1,
-          total: totalFiles,
-          message: '获取元数据中...'
-      });
+        event.reply('progress-update', {
+            current: fileIndex + 1,
+            total: totalFiles,
+            message: '获取元数据中...'
+        });
     }
 });
 
@@ -290,7 +290,7 @@ ipcMain.on('rename-files', async (event, filesToRename) => {
         try {
             // 如果旧路径和新路径相同，则无需重命名
             if (oldPath === newPath) {
-                 results.push({
+                results.push({
                     status: 'info',
                     oldPath: oldPath,
                     newPath: newPath,
@@ -298,7 +298,7 @@ ipcMain.on('rename-files', async (event, filesToRename) => {
                 });
                 continue; // 跳过当前文件，处理下一个
             }
-            
+
             let newPathExists = false; // 标记新路径是否存在
             let isSameFileDifferentCase = false; // 标记是否为大小写不同的同一文件
 
@@ -321,30 +321,7 @@ ipcMain.on('rename-files', async (event, filesToRename) => {
 
             // 如果新路径已存在且不是同一文件（不同大小写），则处理文件名冲突
             if (newPathExists && !isSameFileDifferentCase) {
-                let counter = 1;
-                const baseName = path.basename(newFileName, path.extname(newFileName));
-                const ext = path.extname(newFileName);
-                // 循环尝试添加后缀 (1), (2) ... 直到找到一个不冲突的文件名
-                while (true) {
-                    let tempNewPath = path.join(oldDir, `${baseName} (${counter})${ext}`);
-                    try {
-                        // 尝试访问新生成的带后缀的文件名
-                        await fs.access(tempNewPath);
-                        counter++; // 如果存在，计数器递增
-                        if (counter > 100) { // 防止无限循环
-                            throw new Error("尝试了过多的后缀，无法生成唯一文件名。");
-                        }
-                    } catch (e) {
-                        // 如果文件不存在 (ENOENT)，则找到了可用文件名
-                        if (e.code === 'ENOENT') {
-                            newPath = tempNewPath;
-                            break;
-                        } else {
-                            throw e; // 其他错误则抛出
-                        }
-                    }
-                }
-                // 执行重命名操作
+                newPath = await findAvailableNewPath(oldDir, newFileName);
                 await fs.rename(oldPath, newPath);
                 results.push({
                     status: 'success',
@@ -377,3 +354,36 @@ ipcMain.on('rename-files', async (event, filesToRename) => {
     event.reply('progress-update', { message: '所有重命名操作已处理完毕。' });
     event.reply('rename-results', results);
 });
+
+/**
+ * @async
+ * @function findAvailableNewPath
+ * @description 查找一个可用的新文件路径，如果原始路径已存在，则尝试添加数字后缀。
+ * @param {string} directory - 文件所在的目录。
+ * @param {string} originalFileName - 原始文件名。
+ * @returns {Promise<string>} 可用的新文件路径。
+ */
+async function findAvailableNewPath(directory, originalFileName) {
+    let counter = 1;
+    const baseName = path.basename(originalFileName, path.extname(originalFileName));
+    const ext = path.extname(originalFileName);
+    let newPath = path.join(directory, originalFileName);
+
+    while (true) {
+        try {
+            await fs.access(newPath); // 检查文件是否存在
+            // 如果文件存在，生成新的文件名
+            if (counter > 100) { // 防止无限循环
+                throw new Error("尝试了过多的后缀，无法生成唯一文件名。");
+            }
+            newPath = path.join(directory, `${baseName} (${counter})${ext}`);
+            counter++;
+        } catch (e) {
+            if (e.code === 'ENOENT') {
+                // 文件不存在，当前 newPath 可用
+                return newPath;
+            }
+            throw e; // 其他错误则抛出
+        }
+    }
+}
