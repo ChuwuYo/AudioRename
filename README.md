@@ -1,5 +1,5 @@
 <div align="center">
-    <img src="https://github.com/user-attachments/assets/395a8ce6-79f6-4262-a107-3a39e866b27f" alt="icon" width="150" height="150">
+    <img src="assets/Music.ico" alt="icon" width="150" height="150">
     <h1>音频文件重命名工具</h1>
     <p>一个基于 Electron 构建的桌面应用程序，旨在帮助您轻松地批量重命名音频文件，根据其内置的元数据（如艺术家和歌曲标题）自动生成新的文件名。</p>
 </div>
