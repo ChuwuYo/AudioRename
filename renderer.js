@@ -1,6 +1,15 @@
 // 渲染进程，负责处理用户界面交互、向主进程发送请求以及展示结果。
-const { ipcRenderer } = require('electron'); // 直接使用 ipcRenderer
-const path = require('path'); // 直接使用 path 模块
+// 使用预加载脚本提供的安全 API，不再直接使用 require
+const ipcRenderer = {
+    send: (channel, data) => window.electronAPI.send(channel, data),
+    on: (channel, callback) => window.electronAPI.receive(channel, callback)
+};
+
+// 使用预加载脚本提供的 pathUtils
+const path = {
+    basename: (filepath, ext) => window.pathUtils.basename(filepath, ext),
+    extname: (filepath) => window.pathUtils.extname(filepath)
+};
 
 const selectDirBtn = document.getElementById('select-dir-btn');
 const selectFilesBtn = document.getElementById('select-files-btn');
@@ -9,19 +18,26 @@ const fileListDiv = document.getElementById('fileList');
 const logDiv = document.getElementById('log');
 // 自定义下拉菜单的触发按钮，我们将监听其上的自定义事件
 const renamePatternButton = document.getElementById('rename-pattern-button');
-const loadingOverlay = document.getElementById('loading-overlay'); // 获取加载遮罩层
-let loadingTimerId = null; // 用于存储 setTimeout 的 ID
 
 let selectedFilePaths = [];
 let filesWithMetadata = [];
+
+// 标记是否已显示"所有文件处理完毕"的消息
+let allFilesProcessedMessageShown = false;
+// 当前正在处理的批次ID，用于区分不同的文件处理操作
+let currentBatchId = 0;
+// 添加一个变量来记录当前进度条的ID
+let currentProgressElementId = null;
 
 /**
  * @function logMessage
  * @description 向日志区域添加消息。
  * @param {string} message - 要记录的消息内容。
  * @param {string} [type='info'] - 消息类型（'info', 'success', 'error', 'warning', 'progress'）。
+ * @param {number} [current=0] - 当前处理项，用于进度计算。
+ * @param {number} [total=0] - 总项目数，用于进度计算。
  */
-function logMessage(message, type = 'info') {
+function logMessage(message, type = 'info', current = 0, total = 0) {
     const p = document.createElement('p');
     // 设置 CSS 变量 --index 用于动画延迟
     p.style.setProperty('--index', logDiv.children.length);
@@ -40,6 +56,60 @@ function logMessage(message, type = 'info') {
         iconSpan.textContent = '⚠️ ';
     } else if (type === 'progress') {
         iconSpan.textContent = '⏳ ';
+        
+        // 如果是进度类型且有总数，添加进度条
+        if (total > 0) {
+            // 如果已经有一个进度条，则更新现有进度条而不是创建新的
+            if (updateProgressBar(current, total, message)) {
+                return; // 已更新现有进度条，无需创建新的
+            }
+            
+            // 计算百分比，保留两位小数
+            const percentage = Math.min(((current / total) * 100).toFixed(2), 100);
+            
+            // 创建进度条容器
+            const progressContainer = document.createElement('div');
+            progressContainer.classList.add('progress-container');
+            
+            // 创建进度条元素
+            const progressBar = document.createElement('div');
+            progressBar.classList.add('progress-bar');
+            progressBar.style.width = `${percentage}%`;
+            
+            // 将进度条添加到容器
+            progressContainer.appendChild(progressBar);
+            
+            // 将进度文本添加到消息后面
+            const progressText = document.createElement('span');
+            progressText.classList.add('progress-text');
+            progressText.textContent = `${current}/${total} (${percentage}%)`;
+            progressText.style.color = 'var(--md-sys-color-inverse-primary, #D0BCFF)'; // 确保在黑色背景上清晰可见
+            
+            // 为进度条元素设置唯一ID
+            const progressId = 'progress-' + Date.now();
+            p.id = progressId;
+            currentProgressElementId = progressId;
+            
+            // 将容器和进度信息添加到p元素
+            p.appendChild(iconSpan);
+            p.appendChild(document.createTextNode(message + ' '));
+            p.appendChild(progressText);
+            p.appendChild(progressContainer);
+            
+            // 如果已完成100%，更改图标
+            if (parseFloat(percentage) >= 99.99) {
+                iconSpan.textContent = '✓ ';
+                iconSpan.style.color = 'var(--md-sys-color-tertiary)';
+                // 更新消息为完成状态
+                p.childNodes[1].nodeValue = ' 获取元数据完成 ';
+            }
+            
+            // 直接添加到日志并返回，因为已经处理完毕
+            logDiv.appendChild(p);
+            // 保持滚动条在底部
+            logDiv.scrollTop = logDiv.scrollHeight;
+            return;
+        }
     } else { // 默认为 'info'
         iconSpan.textContent = 'ℹ️ ';
     }
@@ -52,26 +122,99 @@ function logMessage(message, type = 'info') {
 }
 
 /**
- * @function startLoadingIndicator
- * @description 启动一个定时器，如果在延迟后操作仍在进行，则显示加载遮罩。
+ * @function updateProgressBar
+ * @description 更新现有进度条的进度
+ * @param {number} current - 当前处理的项目
+ * @param {number} total - 总项目数
+ * @param {string} message - 进度消息
  */
-function startLoadingIndicator() {
-    clearTimeout(loadingTimerId); // 清除任何现有定时器
-    loadingTimerId = setTimeout(() => {
-        if (loadingOverlay) {
-            loadingOverlay.classList.add('visible');
+function updateProgressBar(current, total, message) {
+    // 计算百分比，确保不超过100%，保留两位小数
+    const percentage = Math.min(((current / total) * 100).toFixed(2), 100);
+    
+    // 如果存在进度条元素ID，则更新该元素
+    if (currentProgressElementId && document.getElementById(currentProgressElementId)) {
+        const progressElement = document.getElementById(currentProgressElementId);
+        const progressBar = progressElement.querySelector('.progress-bar');
+        const progressText = progressElement.querySelector('.progress-text');
+        const iconSpan = progressElement.querySelector('.log-icon');
+        
+        if (progressBar && progressText) {
+            // 更新进度条宽度
+            progressBar.style.width = `${percentage}%`;
+            // 更新进度文本
+            progressText.textContent = `${current}/${total} (${percentage}%)`;
+            
+            // 当进度到达100%时，更新图标为完成标志
+            if (parseFloat(percentage) >= 99.99) {
+                if (iconSpan) {
+                    iconSpan.textContent = '✓ ';
+                    iconSpan.style.color = 'var(--md-sys-color-tertiary)';
+                }
+                // 更新消息为完成状态
+                const textNode = Array.from(progressElement.childNodes).find(node => 
+                    node.nodeType === Node.TEXT_NODE && node.textContent.trim() !== '');
+                if (textNode) {
+                    textNode.nodeValue = ` 获取元数据完成 `;
+                }
+            } else {
+                // 更新消息文本
+                const textNode = Array.from(progressElement.childNodes).find(node => 
+                    node.nodeType === Node.TEXT_NODE && node.textContent.trim() !== '');
+                if (textNode) {
+                    textNode.nodeValue = ` ${message} `;
+                }
+            }
+            
+            // 保持滚动条在底部
+            logDiv.scrollTop = logDiv.scrollHeight;
+            return true;
         }
-    }, 1000); // 1秒后显示
+    }
+    return false;
 }
 
 /**
- * @function stopLoadingIndicator
- * @description 隐藏加载遮罩并清除定时器。
+ * @function startProcessingIndicator
+ * @description 显示处理指示器，创建或更新进度条
+ * @param {string} message - 进度消息
+ * @param {number} [current=0] - 当前处理项
+ * @param {number} [total=0] - 总项目数
  */
-function stopLoadingIndicator() {
-    clearTimeout(loadingTimerId);
-    if (loadingOverlay) {
-        loadingOverlay.classList.remove('visible');
+function startProcessingIndicator(message, current = 0, total = 0) {
+    if (total > 0) {
+        // 尝试更新现有进度条，如果没有则创建新的
+        if (!updateProgressBar(current, total, message)) {
+            logMessage(message, 'progress', current, total);
+        }
+    } else {
+        // 如果没有总数信息，则显示不确定进度的消息
+        logMessage(message, 'progress');
+    }
+}
+
+/**
+ * @function updateProcessingIndicator
+ * @description 更新处理进度
+ * @param {string} message - 进度消息
+ * @param {number} current - 当前处理项
+ * @param {number} total - 总项目数
+ */
+function updateProcessingIndicator(message, current, total) {
+    if (!updateProgressBar(current, total, message)) {
+        logMessage(message, 'progress', current, total);
+    }
+}
+
+/**
+ * @function stopProcessingIndicator
+ * @description 停止处理指示器，可选择显示完成消息
+ * @param {string} [completeMessage] - 完成时显示的消息
+ * @param {string} [type='success'] - 完成消息的类型
+ */
+function stopProcessingIndicator(completeMessage, type = 'success') {
+    if (completeMessage) {
+        logMessage(completeMessage, type);
     }
 }
 
@@ -201,6 +344,39 @@ function toggleControls(disabled) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+    // 添加进度条样式
+    const style = document.createElement('style');
+    style.textContent = `
+        .progress-container {
+            width: 100%;
+            height: 4px;
+            background-color: var(--md-sys-color-surface-variant);
+            border-radius: 2px;
+            margin-top: 4px;
+            overflow: hidden;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            background-color: var(--md-sys-color-primary);
+            border-radius: 2px;
+            transition: width 0.3s ease;
+        }
+        
+        .progress-text {
+            margin-left: 4px;
+            font-size: 0.85em;
+            color: var(--md-sys-color-primary);
+            font-weight: 600;
+        }
+        
+        /* 对于黑色背景的日志条目 */
+        #log p .progress-text {
+            color: var(--md-sys-color-inverse-primary, #D0BCFF);
+        }
+    `;
+    document.head.appendChild(style);
+    
     logMessage('应用程序初始化。', 'info');
     toggleControls(false); // 初始时启用所有控件
     renameBtn.disabled = true; // 重命名按钮初始禁用
@@ -211,7 +387,12 @@ document.addEventListener('DOMContentLoaded', () => {
 selectDirBtn.addEventListener('click', () => {
     logMessage('请求选择目录...');
     toggleControls(true); // 禁用控件，防止重复操作
-    // 注意：这里不直接启动加载指示器，因为showOpenDialog可能很快完成
+    
+    // 增加批次ID以区分新的操作
+    currentBatchId++;
+    // 重置状态变量
+    allFilesProcessedMessageShown = false;
+    
     ipcRenderer.send('select-directory'); // 向主进程发送请求
 });
 
@@ -219,7 +400,12 @@ selectDirBtn.addEventListener('click', () => {
 selectFilesBtn.addEventListener('click', () => {
     logMessage('请求选择文件...');
     toggleControls(true); // 禁用控件
-    // 注意：这里不直接启动加载指示器，因为showOpenDialog可能很快完成
+    
+    // 增加批次ID以区分新的操作
+    currentBatchId++;
+    // 重置状态变量
+    allFilesProcessedMessageShown = false;
+    
     ipcRenderer.send('select-files'); // 向主进程发送请求
 });
 
@@ -236,9 +422,15 @@ renamePatternButton.addEventListener('rename-pattern-change', (event) => {
 
     logMessage(`命名模式已更改为 "${newPatternText}"，重新获取元数据...`, 'info');
     toggleControls(true); // 禁用控件
-    startLoadingIndicator(); // 启动加载指示器，因为元数据重新获取是处理操作
+    startProcessingIndicator('准备获取元数据...', 0, selectedFilePaths.length); // 使用新的处理指示器
     filesWithMetadata = []; // 清空已有的元数据，准备重新获取
-    updateFileList(); // 更新文件列表显示为“等待元数据”状态
+    
+    // 增加批次ID以区分新的操作
+    currentBatchId++;
+    // 重置状态变量
+    allFilesProcessedMessageShown = false;
+    
+    updateFileList(); // 更新文件列表显示为"等待元数据"状态
 
     // 重新向主进程发送请求，获取所有选中文件的元数据
     selectedFilePaths.forEach((filePath, index) => {
@@ -250,7 +442,6 @@ renamePatternButton.addEventListener('rename-pattern-change', (event) => {
         });
     });
 });
-
 
 // 监听开始重命名按钮点击事件
 renameBtn.addEventListener('click', () => {
@@ -268,7 +459,13 @@ renameBtn.addEventListener('click', () => {
     }
     logMessage(`准备重命名 ${filesToActuallyRename.length} 个文件...`, 'info');
     toggleControls(true); // 禁用控件
-    startLoadingIndicator(); // 启动加载指示器，因为重命名是处理操作
+    startProcessingIndicator('开始重命名文件...', 0, filesToActuallyRename.length); // 使用新的处理指示器
+    
+    // 增加批次ID以区分新的操作
+    currentBatchId++;
+    // 重置状态变量
+    allFilesProcessedMessageShown = false;
+    
     // 准备发送给主进程的重命名任务载荷
     const payload = filesToActuallyRename.map(f => ({
         oldPath: f.filePath,
@@ -278,18 +475,21 @@ renameBtn.addEventListener('click', () => {
 });
 
 // 监听主进程回复的选定文件列表
-ipcRenderer.on('selected-files-reply', (event, files) => {
+ipcRenderer.on('selected-files-reply', (files) => {
     selectedFilePaths = files || []; // 更新选定的文件路径
     filesWithMetadata = []; // 清空之前的元数据
-
+    
+    // 重置状态变量
+    allFilesProcessedMessageShown = false;
+    
     if (selectedFilePaths.length > 0) {
         logMessage(`已选择 ${selectedFilePaths.length} 个文件。开始获取元数据...`);
-        startLoadingIndicator(); // 在确认有文件需要处理（获取元数据）时启动加载指示器
+        startProcessingIndicator('准备获取元数据...', 0, selectedFilePaths.length); // 使用新的处理指示器
         // 获取当前自定义下拉菜单中选中的模式
         const currentPattern = renamePatternButton.dataset.value;
         // 向主进程发送请求，获取每个文件的元数据
         selectedFilePaths.forEach((filePath, index) => {
-            // 预先为每个文件添加一个“pending”状态的元数据占位符
+            // 预先为每个文件添加一个"pending"状态的元数据占位符
             filesWithMetadata.push({
                 filePath: filePath,
                 status: 'pending',
@@ -306,14 +506,14 @@ ipcRenderer.on('selected-files-reply', (event, files) => {
         renameBtn.disabled = true; // 初始禁用重命名按钮
     } else {
         logMessage('没有选择任何文件或所选目录为空。');
-        stopLoadingIndicator(); // 没有文件处理，停止加载指示器
+        stopProcessingIndicator(); // 停止处理指示器
         toggleControls(false); // 启用控件
     }
-    updateFileList(); // 更新文件列表显示（此时会显示“等待元数据”状态）
+    updateFileList(); // 更新文件列表显示（此时会显示"等待元数据"状态）
 });
 
 // 监听主进程回复的文件元数据结果
-ipcRenderer.on('file-metadata-result', (event, result) => {
+ipcRenderer.on('file-metadata-result', (result) => {
     // 查找是否已存在该文件的元数据，如果存在则更新，否则添加
     // 使用 result.originalIndex 来确保正确更新对应文件的数据
     const existingIndex = filesWithMetadata.findIndex(f => f.originalIndex === result.originalIndex);
@@ -331,55 +531,76 @@ ipcRenderer.on('file-metadata-result', (event, result) => {
     }
     updateFileList(); // 实时更新文件列表显示
 
+    // 仅在开始处理和所有文件处理完成时更新进度
+    if (selectedFilePaths.length > 0) {
+        // 只有在有新文件添加时才更新进度，避免过多重复更新
+        if (filesWithMetadata.length % Math.max(1, Math.floor(selectedFilePaths.length / 10)) === 0 || 
+            filesWithMetadata.length === selectedFilePaths.length) {
+            updateProcessingIndicator('获取元数据中...', filesWithMetadata.length, selectedFilePaths.length);
+        }
+    }
+
     // 如果所有文件的元数据都已获取，则重新启用控件
-    if (filesWithMetadata.length === selectedFilePaths.length && selectedFilePaths.every((_, i) => filesWithMetadata.some(f => f.originalIndex === i))) {
-        logMessage('所有文件的元数据信息已处理完毕。');
-        toggleControls(false); // 启用控件
-        stopLoadingIndicator(); // 停止加载指示器
+    if (filesWithMetadata.length === selectedFilePaths.length && 
+        selectedFilePaths.every((_, i) => filesWithMetadata.some(f => f.originalIndex === i))) {
+        
+        // 确保显示100%的进度（仅一次）
+        updateProcessingIndicator('获取元数据完成', selectedFilePaths.length, selectedFilePaths.length);
+        
+        // 延迟显示完成消息，确保它在进度消息之后显示
+        setTimeout(() => {
+            if (!allFilesProcessedMessageShown) {
+                stopProcessingIndicator('所有文件的元数据信息已处理完毕。', 'info');
+                allFilesProcessedMessageShown = true;
+            }
+            toggleControls(false); // 启用控件
+        }, 100);
     }
 });
 
 // 监听主进程回复的重命名结果
-ipcRenderer.on('rename-results', (event, results) => {
+ipcRenderer.on('rename-results', (results) => {
     results.forEach(result => {
         logMessage(result.message, result.status); // 记录每个重命名操作的结果
     });
-    logMessage('所有重命名操作已完成。', 'info');
+    stopProcessingIndicator('所有重命名操作已完成。', 'info'); // 使用新的处理指示器停止函数
     // 重命名完成后，清空文件列表和元数据
     selectedFilePaths = [];
     filesWithMetadata = [];
     updateFileList(); // 更新文件列表显示为占位符
     toggleControls(false); // 启用控件
-    stopLoadingIndicator(); // 停止加载指示器
 });
 
 // 监听主进程发送的操作错误信息
-ipcRenderer.on('operation-error', (event, message) => {
+ipcRenderer.on('operation-error', (message) => {
     logMessage(message, 'error');
+    stopProcessingIndicator(); // 停止处理指示器
     toggleControls(false); // 启用控件
-    stopLoadingIndicator(); // 停止加载指示器
 });
 
-// 监听主进程发送的进度更新信息
-ipcRenderer.on('progress-update', (event, data) => {
-    let message = data.message;
-    if (data.current !== undefined && data.total !== undefined) {
-        message = `${data.message} (${data.current}/${data.total})`;
+// 添加进度更新监听器
+ipcRenderer.on('progress-update', (data) => {
+    // 确认有当前和总数信息
+    if (data.current === undefined || data.total === undefined) {
+        // 如果没有进度信息，直接显示消息
+        logMessage(data.message, 'progress');
+        return;
     }
-    const lastLogEntry = logDiv.lastElementChild;
-    // 如果上一条日志是进度信息，则更新它而不是添加新行
-    // 仅当日志内容包含"..."时（表示进行中消息）才更新同一行，避免覆盖非进度消息
-    if (lastLogEntry && lastLogEntry.textContent.includes('⏳') && lastLogEntry.textContent.includes('...')) {
-        // 找到文本节点并更新其内容
-        const textNode = Array.from(lastLogEntry.childNodes).find(node => node.nodeType === Node.TEXT_NODE);
-        if (textNode) {
-            textNode.nodeValue = ` ${message}`; // 直接更新文本内容
-        } else {
-            // 备用方案：如果找不到文本节点，直接更新整个P标签的内容（可能覆盖图标）
-            lastLogEntry.textContent = `⏳ ${message}`;
-        }
-    } else {
-        // 否则，添加一条新的进度日志
-        logMessage(message, 'progress');
-    }
+    
+    // 直接更新进度条，不再使用消息队列
+    updateProcessingIndicator(data.message, data.current, data.total);
 });
+
+/**
+ * @function processQueuedProgressMessages
+ * @description 处理队列中的进度消息，确保按顺序显示
+ * @param {boolean} [forceAll=false] - 是否强制处理所有消息，忽略顺序
+ */
+function processQueuedProgressMessages(forceAll = false) {
+    // 简化为只处理强制更新到100%的情况
+    if (forceAll && selectedFilePaths.length > 0) {
+        updateProcessingIndicator('获取元数据完成', selectedFilePaths.length, selectedFilePaths.length);
+    }
+    // 清空消息队列
+    pendingProgressMessages = [];
+}

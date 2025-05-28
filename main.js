@@ -48,7 +48,7 @@ function cleanFilename(artist, title, ext, pattern, index = null) {
 
     // 如果清理后的文件名只剩下扩展名或为空，则使用备用名称
     if (newFilename === ext || newFilename.trim() === ext || newFilename.trim() === '') {
-        const fallbackName = title || artist || 'UntitledTrack'; // 优先使用标题，其次艺术家，最后“UntitledTrack”
+        const fallbackName = title || artist || 'UntitledTrack'; // 优先使用标题，其次艺术家，最后"UntitledTrack"
         newFilename = `${fallbackName}${ext}`.replace(illegalChars, '_').replace(/^[. ]+|[. ]+$/g, '');
         // 再次检查，如果仍然只剩下扩展名，则强制使用通用备用名
         if (newFilename === ext || newFilename.trim() === ext || newFilename.trim() === '') {
@@ -69,8 +69,9 @@ const createMainWindow = () => {
         minWidth: 800,
         minHeight: 600,
         webPreferences: {
-            nodeIntegration: true,    // 允许在渲染进程中使用 Node.js API
-            contextIsolation: false,  // 禁用上下文隔离
+            nodeIntegration: false,    // 禁用直接在渲染进程中使用 Node.js API
+            contextIsolation: true,    // 启用上下文隔离
+            preload: path.join(__dirname, 'preload.js') // 配置预加载脚本
         },
         autoHideMenuBar: true,
         icon: path.join(__dirname, 'assets', 'Music.ico')
@@ -140,7 +141,7 @@ async function findAudioFilesInDirectory(dirPath) {
 
 /**
  * @listens ipcMain#select-directory
- * @description 处理从渲染进程发送的“选择目录”请求。当用户选择一个目录后，扫描其中的音频文件并返回给渲染进程。
+ * @description 处理从渲染进程发送的"选择目录"请求。当用户选择一个目录后，扫描其中的音频文件并返回给渲染进程。
  * @param {IpcMainEvent} event - IPC事件对象。
  */
 ipcMain.on('select-directory', async (event) => {
@@ -184,7 +185,7 @@ ipcMain.on('select-directory', async (event) => {
 
 /**
  * @listens ipcMain#select-files
- * @description 处理从渲染进程发送的“选择文件”请求。当用户选择文件后，将文件路径返回给渲染进程。
+ * @description 处理从渲染进程发送的"选择文件"请求。当用户选择文件后，将文件路径返回给渲染进程。
  * @param {IpcMainEvent} event - IPC事件对象。
  */
 ipcMain.on('select-files', async (event) => {
@@ -214,7 +215,7 @@ ipcMain.on('select-files', async (event) => {
 
 /**
  * @listens ipcMain#get-file-metadata
- * @description 处理从渲染进程发送的“获取文件元数据”请求。读取指定音频文件的艺术家和标题信息，并根据命名模式生成新的文件名。
+ * @description 处理从渲染进程发送的"获取文件元数据"请求。读取指定音频文件的艺术家和标题信息，并根据命名模式生成新的文件名。
  * @param {IpcMainEvent} event - IPC事件对象。
  * @param {object} payload - 包含 filePath (文件路径), pattern (命名模式), fileIndex (文件在列表中的索引), totalFiles (总文件数) 的对象。
  */
@@ -264,7 +265,7 @@ ipcMain.on('get-file-metadata', async (event, { filePath, pattern, fileIndex, to
 
 /**
  * @listens ipcMain#rename-files
- * @description 处理从渲染进程发送的“重命名文件”请求。对每个文件执行重命名操作，并处理可能的文件名冲突。
+ * @description 处理从渲染进程发送的"重命名文件"请求。对每个文件执行重命名操作，并处理可能的文件名冲突。
  * @param {IpcMainEvent} event - IPC事件对象。
  * @param {object[]} filesToRename - 包含 oldPath (旧文件路径) 和 newFileName (新文件名) 的文件信息数组。
  */
