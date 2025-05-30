@@ -3,6 +3,7 @@ const { app, BrowserWindow, dialog, ipcMain } = require('electron');
 const path = require('path');
 const fs = require('fs').promises; // 使用 fs.promises 以支持异步操作
 const mm = require('music-metadata'); // 导入 music-metadata 库
+const fastGlob = require('fast-glob'); // 导入 fast-glob 库
 
 let mainWindow; // 声明 mainWindow 变量以供全局访问
 
@@ -102,12 +103,11 @@ app.on('activate', () => {
 /**
  * @async
  * @function findAudioFilesInDirectory
- * @description 递归查找指定目录中的所有支持的音频文件。
+ * @description 使用 fast-glob 递归查找指定目录中的所有支持的音频文件。
  * @param {string} dirPath - 要搜索的目录路径。
  * @returns {Promise<string[]>} 音频文件路径的数组。
  */
 async function findAudioFilesInDirectory(dirPath) {
-    let audioFiles = [];
     try {
         // 检查目录是否存在且可访问
         await fs.access(dirPath);
@@ -116,27 +116,26 @@ async function findAudioFilesInDirectory(dirPath) {
         return [];
     }
 
-    // 读取目录内容，并包含文件类型信息
-    const dirents = await fs.readdir(dirPath, { withFileTypes: true });
-
     // 定义支持的音频文件扩展名列表
-    const audioExtensions = ['.mp3', '.flac', '.ogg', '.m4a', '.aac', '.wma', '.wv', '.opus'];
+    const audioExtensions = ['mp3', 'flac', 'ogg', 'm4a', 'aac', 'wma', 'wv', 'opus'];
+    
+    try {
+        // 使用 fast-glob 进行快速文件搜索
+        const files = await fastGlob(`**/*.{${audioExtensions.join(',')}}`, {
+            cwd: dirPath,                    // 指定搜索目录
+            absolute: true,                  // 返回绝对路径
+            onlyFiles: true,                 // 只返回文件
+            followSymbolicLinks: false,      // 不跟随符号链接
+            ignore: ['**/node_modules/**'],  // 忽略 node_modules 目录
+            dot: false,                      // 不包含以 . 开头的文件
+            unique: true                     // 确保结果唯一
+        });
 
-    // 遍历目录中的每个条目
-    for (const dirent of dirents) {
-        const fullPath = path.join(dirPath, dirent.name);
-        if (dirent.isDirectory()) {
-            // 如果是目录，则递归调用自身
-            audioFiles = audioFiles.concat(await findAudioFilesInDirectory(fullPath));
-        } else if (dirent.isFile()) {
-            // 如果是文件，检查其扩展名是否在支持列表中
-            const ext = path.extname(dirent.name).toLowerCase();
-            if (audioExtensions.includes(ext)) {
-                audioFiles.push(fullPath);
-            }
-        }
+        return files;
+    } catch (error) {
+        console.error(`[Main Process] 搜索音频文件时出错:`, error);
+        return [];
     }
-    return audioFiles;
 }
 
 /**
