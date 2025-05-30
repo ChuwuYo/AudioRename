@@ -17,7 +17,7 @@
   },
   "build": {
     "appId": "com.yourcompany.audiorename",
-    "productName": "音频批量重命名工具",
+    "productName": "AudioRename",
     "copyright": "Copyright © 2025 ChuwuYo",
     "files": [
       "**/*",
@@ -48,5 +48,6 @@
     "portable": {
       "artifactName": "${productName} ${version} Portable.${ext}"
     }
-  }
+  },
+  "displayName": "音频批量重命名工具"
 }
