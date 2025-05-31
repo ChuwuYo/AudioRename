@@ -30,6 +30,21 @@ let currentBatchId = 0;
 let currentProgressElementId = null;
 
 /**
+ * @function clearLog
+ * @description 清空日志区域，保留初始消息
+ */
+function clearLog() {
+    // 保留第一条初始化消息
+    const initialMessage = logDiv.firstChild;
+    logDiv.innerHTML = '';
+    if (initialMessage) {
+        logDiv.appendChild(initialMessage);
+    }
+    // 重置进度条ID
+    currentProgressElementId = null;
+}
+
+/**
  * @function logMessage
  * @description 向日志区域添加消息。
  * @param {string} message - 要记录的消息内容。
@@ -38,6 +53,17 @@ let currentProgressElementId = null;
  * @param {number} [total=0] - 总项目数，用于进度计算。
  */
 function logMessage(message, type = 'info', current = 0, total = 0) {
+    // 检查是否已经存在相同的进度消息
+    if (type === 'progress' && total > 0) {
+        const existingProgress = document.getElementById(currentProgressElementId);
+        if (existingProgress) {
+            // 如果存在进度条，直接更新它
+            if (updateProgressBar(current, total, message)) {
+                return;
+            }
+        }
+    }
+
     const p = document.createElement('p');
     // 设置 CSS 变量 --index 用于动画延迟
     p.style.setProperty('--index', logDiv.children.length);
@@ -59,11 +85,6 @@ function logMessage(message, type = 'info', current = 0, total = 0) {
         
         // 如果是进度类型且有总数，添加进度条
         if (total > 0) {
-            // 如果已经有一个进度条，则更新现有进度条而不是创建新的
-            if (updateProgressBar(current, total, message)) {
-                return; // 已更新现有进度条，无需创建新的
-            }
-            
             // 计算百分比，保留两位小数
             const percentage = Math.min(((current / total) * 100).toFixed(2), 100);
             
@@ -83,7 +104,7 @@ function logMessage(message, type = 'info', current = 0, total = 0) {
             const progressText = document.createElement('span');
             progressText.classList.add('progress-text');
             progressText.textContent = `${current}/${total} (${percentage}%)`;
-            progressText.style.color = 'var(--md-sys-color-inverse-primary, #D0BCFF)'; // 确保在黑色背景上清晰可见
+            progressText.style.color = 'var(--md-sys-color-inverse-primary, #D0BCFF)';
             
             // 为进度条元素设置唯一ID
             const progressId = 'progress-' + Date.now();
@@ -103,22 +124,39 @@ function logMessage(message, type = 'info', current = 0, total = 0) {
                 // 更新消息为完成状态
                 p.childNodes[1].nodeValue = ' 获取元数据完成 ';
             }
-            
-            // 直接添加到日志并返回，因为已经处理完毕
-            logDiv.appendChild(p);
-            // 保持滚动条在底部
-            logDiv.scrollTop = logDiv.scrollHeight;
-            return;
         }
     } else { // 默认为 'info'
         iconSpan.textContent = 'ℹ️ ';
     }
 
-    p.appendChild(iconSpan);
-    p.appendChild(document.createTextNode(message));
-    logDiv.appendChild(p);
-    // 保持滚动条在底部
-    logDiv.scrollTop = logDiv.scrollHeight;
+    if (type !== 'progress' || total === 0) {
+        p.appendChild(iconSpan);
+        p.appendChild(document.createTextNode(message));
+    }
+
+    // 限制日志条目数量，保留最新的1000条
+    const MAX_LOG_ENTRIES = 1000;
+    while (logDiv.children.length >= MAX_LOG_ENTRIES) {
+        logDiv.removeChild(logDiv.firstChild);
+    }
+
+    // 如果是完成消息，确保它显示在进度条之后
+    if (message === '所有文件的元数据信息已处理完毕。') {
+        const progressElement = document.getElementById(currentProgressElementId);
+        if (progressElement) {
+            logDiv.insertBefore(p, progressElement.nextSibling);
+        } else {
+            logDiv.appendChild(p);
+        }
+    } else {
+        logDiv.appendChild(p);
+    }
+
+    // 智能滚动：只有当用户没有手动滚动时才自动滚动到底部
+    const isScrolledToBottom = logDiv.scrollHeight - logDiv.clientHeight <= logDiv.scrollTop + 1;
+    if (isScrolledToBottom) {
+        logDiv.scrollTop = logDiv.scrollHeight;
+    }
 }
 
 /**
@@ -374,8 +412,46 @@ document.addEventListener('DOMContentLoaded', () => {
         #log p .progress-text {
             color: var(--md-sys-color-inverse-primary, #D0BCFF);
         }
+
+        /* 清理日志按钮样式 */
+        #clear-log-btn {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            min-width: 28px;
+            min-height: 28px;
+            padding: 0 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0;
+            z-index: 2;
+        }
+        #clear-log-btn svg {
+            width: 18px;
+            height: 18px;
+            display: block;
+        }
+        #clear-log-btn .icon-stroke {
+            stroke: #fff;
+        }
     `;
     document.head.appendChild(style);
+    
+    // 添加清理日志按钮（SVG图标）
+    const clearLogBtn = document.createElement('button');
+    clearLogBtn.id = 'clear-log-btn';
+    clearLogBtn.title = '清理日志';
+    clearLogBtn.type = 'button';
+    clearLogBtn.innerHTML = `
+        <svg viewBox="0 0 24 24" fill="none">
+            <rect x="2" y="7" width="20" height="13" rx="3" fill="none"/>
+            <path class="icon-stroke" d="M8 11v5M12 11v5M16 11v5M4 7h16M10 3h4a2 2 0 0 1 2 2v2H8V5a2 2 0 0 1 2-2z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+    `;
+    clearLogBtn.addEventListener('click', clearLog);
+    logDiv.parentElement.style.position = 'relative';
+    logDiv.parentElement.appendChild(clearLogBtn);
     
     logMessage('应用程序初始化。', 'info');
     toggleControls(false); // 初始时启用所有控件
@@ -515,28 +591,27 @@ ipcRenderer.on('selected-files-reply', (files) => {
 // 监听主进程回复的文件元数据结果
 ipcRenderer.on('file-metadata-result', (result) => {
     // 查找是否已存在该文件的元数据，如果存在则更新，否则添加
-    // 使用 result.originalIndex 来确保正确更新对应文件的数据
     const existingIndex = filesWithMetadata.findIndex(f => f.originalIndex === result.originalIndex);
     if (existingIndex > -1) {
         filesWithMetadata[existingIndex] = result;
     } else {
         filesWithMetadata.push(result);
-        // 如果文件未找到，可能是因为在处理过程中文件列表被清空或重新加载了
-        // 这种情况下，确保 filesWithMetadata 仍然与 selectedFilePaths 同步
         filesWithMetadata.sort((a, b) => a.originalIndex - b.originalIndex);
     }
 
     if (result.status === 'error') {
         logMessage(`文件 "${path.basename(result.filePath)}" 元数据获取失败: ${result.message}`, 'error');
     }
-    updateFileList(); // 实时更新文件列表显示
+    updateFileList();
 
-    // 仅在开始处理和所有文件处理完成时更新进度
+    // 更新进度
     if (selectedFilePaths.length > 0) {
-        // 只有在有新文件添加时才更新进度，避免过多重复更新
-        if (filesWithMetadata.length % Math.max(1, Math.floor(selectedFilePaths.length / 10)) === 0 || 
-            filesWithMetadata.length === selectedFilePaths.length) {
-            updateProcessingIndicator('获取元数据中...', filesWithMetadata.length, selectedFilePaths.length);
+        const processedCount = filesWithMetadata.length;
+        // 确保进度条显示100%
+        if (processedCount === selectedFilePaths.length) {
+            updateProcessingIndicator('获取元数据完成', selectedFilePaths.length, selectedFilePaths.length);
+        } else {
+            updateProcessingIndicator('获取元数据中...', processedCount, selectedFilePaths.length);
         }
     }
 
@@ -544,7 +619,7 @@ ipcRenderer.on('file-metadata-result', (result) => {
     if (filesWithMetadata.length === selectedFilePaths.length && 
         selectedFilePaths.every((_, i) => filesWithMetadata.some(f => f.originalIndex === i))) {
         
-        // 确保显示100%的进度（仅一次）
+        // 确保显示100%的进度
         updateProcessingIndicator('获取元数据完成', selectedFilePaths.length, selectedFilePaths.length);
         
         // 延迟显示完成消息，确保它在进度消息之后显示
@@ -553,7 +628,7 @@ ipcRenderer.on('file-metadata-result', (result) => {
                 stopProcessingIndicator('所有文件的元数据信息已处理完毕。', 'info');
                 allFilesProcessedMessageShown = true;
             }
-            toggleControls(false); // 启用控件
+            toggleControls(false);
         }, 100);
     }
 });
