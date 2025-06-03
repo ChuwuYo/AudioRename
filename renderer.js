@@ -130,8 +130,8 @@ function logMessage(message, type = 'info', current = 0, total = 0) {
     }
 
     if (type !== 'progress' || total === 0) {
-        p.appendChild(iconSpan);
-        p.appendChild(document.createTextNode(message));
+    p.appendChild(iconSpan);
+    p.appendChild(document.createTextNode(message));
     }
 
     // 限制日志条目数量，保留最新的1000条
@@ -149,13 +149,13 @@ function logMessage(message, type = 'info', current = 0, total = 0) {
             logDiv.appendChild(p);
         }
     } else {
-        logDiv.appendChild(p);
+    logDiv.appendChild(p);
     }
 
     // 智能滚动：只有当用户没有手动滚动时才自动滚动到底部
     const isScrolledToBottom = logDiv.scrollHeight - logDiv.clientHeight <= logDiv.scrollTop + 1;
     if (isScrolledToBottom) {
-        logDiv.scrollTop = logDiv.scrollHeight;
+    logDiv.scrollTop = logDiv.scrollHeight;
     }
 }
 
@@ -262,6 +262,7 @@ function stopProcessingIndicator(completeMessage, type = 'success') {
  */
 function updateFileList() {
     fileListDiv.innerHTML = ''; // 清空现有列表
+    const fragment = document.createDocumentFragment(); // 创建 DocumentFragment
 
     // 如果没有文件，显示占位符信息
     if (selectedFilePaths.length === 0) {
@@ -277,7 +278,7 @@ function updateFileList() {
         placeholder.appendChild(line2);
 
         // 显示支持的音频格式
-        const formats = ['mp3', 'flac', 'ogg', 'm4a', 'aac', 'wma', 'wv', 'opus'];
+        const formats = ['mp3', 'flac', 'ogg', 'm4a', 'aac', 'wma', 'wv', 'opus', 'dsf', 'dff'];
         formats.forEach((format, index) => {
             const codeSpan = document.createElement('code');
             codeSpan.textContent = format;
@@ -287,77 +288,77 @@ function updateFileList() {
             }
         });
 
-        fileListDiv.appendChild(placeholder);
+        fragment.appendChild(placeholder); // 将占位符添加到 fragment
         renameBtn.disabled = true; // 没有文件时禁用重命名按钮
-        return;
-    }
+    } else {
+        // 根据原始索引对文件元数据进行排序，以保持文件列表顺序与选择顺序一致
+        // 注意：这里创建了一个副本进行排序，避免修改原始filesWithMetadata数组的顺序
+        const sortedFilesWithMetadata = [...filesWithMetadata].sort((a, b) => a.originalIndex - b.originalIndex);
 
-    // 根据原始索引对文件元数据进行排序，以保持文件列表顺序与选择顺序一致
-    // 注意：这里创建了一个副本进行排序，避免修改原始filesWithMetadata数组的顺序
-    const sortedFilesWithMetadata = [...filesWithMetadata].sort((a, b) => a.originalIndex - b.originalIndex);
+        // 遍历所有选中的文件路径，创建文件项
+        selectedFilePaths.forEach((filePath, index) => {
+            // 尝试从 sortedFilesWithMetadata 中找到当前文件的元数据，确保与原始索引匹配
+            const fileData = sortedFilesWithMetadata.find(f => f.originalIndex === index);
+            const div = document.createElement('div');
+            div.classList.add('file-item');
 
-    // 遍历所有选中的文件路径，创建文件项
-    selectedFilePaths.forEach((filePath, index) => {
-        // 尝试从 sortedFilesWithMetadata 中找到当前文件的元数据，确保与原始索引匹配
-        const fileData = sortedFilesWithMetadata.find(f => f.originalIndex === index);
-        const div = document.createElement('div');
-        div.classList.add('file-item');
+            const icon = document.createElement('span');
+            icon.classList.add('icon');
+            icon.setAttribute('aria-hidden', 'true');
 
-        const icon = document.createElement('span');
-        icon.classList.add('icon');
-        icon.setAttribute('aria-hidden', 'true');
+            const textSpan = document.createElement('span');
+            textSpan.classList.add('file-name-text');
+            let currentFileName = path.basename(filePath); // 原始文件名
 
-        const textSpan = document.createElement('span');
-        textSpan.classList.add('file-name-text');
-        let currentFileName = path.basename(filePath); // 原始文件名
-
-        if (fileData) {
-            if (fileData.status === 'success') {
-                icon.textContent = '🎵 ';
-                div.classList.remove('pending', 'error'); // 移除待处理和错误样式
-                div.style.borderColor = 'var(--md-sys-color-outline-variant)'; // 默认边框
-                // 如果元数据获取成功，显示旧文件名 -> 新文件名
-                textSpan.textContent = `${currentFileName} → ${fileData.cleanedFileName}`;
-                if (currentFileName === fileData.cleanedFileName) {
-                    textSpan.textContent += " (名称符合标准)";
-                    div.style.borderColor = 'var(--md-sys-color-tertiary)'; // 名称符合标准时显示特殊边框
+            if (fileData) {
+                if (fileData.status === 'success') {
+                    icon.textContent = '🎵 ';
+                    div.classList.remove('pending', 'error'); // 移除待处理和错误样式
+                    div.style.borderColor = 'var(--md-sys-color-outline-variant)'; // 默认边框
+                    // 如果元数据获取成功，显示旧文件名 -> 新文件名
+                    textSpan.textContent = `${currentFileName} → ${fileData.cleanedFileName}`;
+                    if (currentFileName === fileData.cleanedFileName) {
+                        textSpan.textContent += " (名称符合标准)";
+                        div.style.borderColor = 'var(--md-sys-color-tertiary)'; // 名称符合标准时显示特殊边框
+                    }
+                } else if (fileData.status === 'error') {
+                    icon.textContent = '❌ '; // 错误图标
+                    div.classList.add('error'); // 添加错误样式类
+                    div.classList.remove('pending'); // 移除待处理样式
+                    // 如果元数据获取失败，显示错误信息
+                    const errorMsg = fileData.message ? fileData.message.substring(0, 50) + '...' : '未知错误';
+                    textSpan.textContent = `${currentFileName} (元数据读取失败: ${errorMsg})`;
+                    div.style.borderColor = 'var(--md-sys-color-error)'; // 错误时显示错误边框
+                } else {
+                    icon.textContent = '⏳ '; // 正在等待图标
+                    // 未知状态或正在等待元数据
+                    textSpan.textContent = currentFileName + " (等待元数据...)";
+                    div.classList.add('pending'); // 添加待处理样式类
+                    div.classList.remove('error'); // 移除错误样式
                 }
-            } else if (fileData.status === 'error') {
-                icon.textContent = '❌ '; // 错误图标
-                div.classList.add('error'); // 添加错误样式类
-                div.classList.remove('pending'); // 移除待处理样式
-                // 如果元数据获取失败，显示错误信息
-                const errorMsg = fileData.message ? fileData.message.substring(0, 50) + '...' : '未知错误';
-                textSpan.textContent = `${currentFileName} (元数据读取失败: ${errorMsg})`;
-                div.style.borderColor = 'var(--md-sys-color-error)'; // 错误时显示错误边框
             } else {
                 icon.textContent = '⏳ '; // 正在等待图标
-                // 未知状态或正在等待元数据
+                // 文件还在等待元数据处理
                 textSpan.textContent = currentFileName + " (等待元数据...)";
                 div.classList.add('pending'); // 添加待处理样式类
                 div.classList.remove('error'); // 移除错误样式
             }
-        } else {
-            icon.textContent = '⏳ '; // 正在等待图标
-            // 文件还在等待元数据处理
-            textSpan.textContent = currentFileName + " (等待元数据...)";
-            div.classList.add('pending'); // 添加待处理样式类
-            div.classList.remove('error'); // 移除错误样式
+            div.appendChild(icon);
+            div.appendChild(textSpan);
+            fragment.appendChild(div); // 将文件项添加到 fragment
+        });
+
+        // 只有当所有文件的元数据都已处理，并且有文件被选中时，才启用重命名按钮
+        const allMetadataProcessed = filesWithMetadata.length === selectedFilePaths.length;
+        renameBtn.disabled = !allMetadataProcessed || selectedFilePaths.length === 0;
+
+        // 进一步判断：只有当有实际需要重命名的文件时才启用重命名按钮
+        if (!renameBtn.disabled) {
+            const hasFilesToRename = filesWithMetadata.some(f => f.status === 'success' && path.basename(f.filePath) !== f.cleanedFileName);
+            renameBtn.disabled = !hasFilesToRename;
         }
-        div.appendChild(icon);
-        div.appendChild(textSpan);
-        fileListDiv.appendChild(div);
-    });
-
-    // 只有当所有文件的元数据都已处理，并且有文件被选中时，才启用重命名按钮
-    const allMetadataProcessed = filesWithMetadata.length === selectedFilePaths.length;
-    renameBtn.disabled = !allMetadataProcessed || selectedFilePaths.length === 0;
-
-    // 进一步判断：只有当有实际需要重命名的文件时才启用重命名按钮
-    if (!renameBtn.disabled) {
-        const hasFilesToRename = filesWithMetadata.some(f => f.status === 'success' && path.basename(f.filePath) !== f.cleanedFileName);
-        renameBtn.disabled = !hasFilesToRename;
     }
+    fileListDiv.appendChild(fragment); // 一次性将 fragment 追加到 DOM
 }
 
 /**

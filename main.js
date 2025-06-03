@@ -86,14 +86,14 @@ const createMainWindow = () => {
 // 当 Electron 应用准备就绪时创建主窗口
 app.whenReady().then(createMainWindow);
 
-// 监听所有窗口关闭事件。在 macOS 上，即使所有窗口都关闭了，应用也通常会保持活跃，直到用户明确退出 (Cmd+Q)。
+// 监听所有窗口关闭事件
 app.on('window-all-closed', () => {
     if (process.platform !== 'darwin') {
         app.quit();
     }
 });
 
-// 监听应用激活事件。在 macOS 上，当 dock 图标被点击且没有其他窗口打开时，会重新创建一个窗口。
+// 监听应用激活事件
 app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
         createMainWindow();
@@ -117,7 +117,7 @@ async function findAudioFilesInDirectory(dirPath) {
     }
 
     // 定义支持的音频文件扩展名列表
-    const audioExtensions = ['mp3', 'flac', 'ogg', 'm4a', 'aac', 'wma', 'wv', 'opus'];
+    const audioExtensions = ['mp3', 'flac', 'ogg', 'm4a', 'aac', 'wma', 'wv', 'opus', 'dsf', 'dff'];
     
     try {
         // 使用 fast-glob 进行快速文件搜索
@@ -126,7 +126,7 @@ async function findAudioFilesInDirectory(dirPath) {
             absolute: true,                  // 返回绝对路径
             onlyFiles: true,                 // 只返回文件
             followSymbolicLinks: false,      // 不跟随符号链接
-            ignore: ['**/node_modules/**'],  // 忽略 node_modules 目录
+            ignore: ['**/node_modules/**'],  // 忽略 node_modules 目录        
             dot: false,                      // 不包含以 . 开头的文件
             unique: true                     // 确保结果唯一
         });
@@ -199,7 +199,7 @@ ipcMain.on('select-files', async (event) => {
     const { canceled, filePaths } = await dialog.showOpenDialog(mainWindow, {
         properties: ['openFile', 'multiSelections'],
         filters: [
-            { name: '音频文件', extensions: ['mp3', 'flac', 'ogg', 'm4a', 'aac', 'wma', 'wv', 'opus'] }
+            { name: '音频文件', extensions: ['mp3', 'flac', 'ogg', 'm4a', 'aac', 'wma', 'wv', 'opus', 'dsf', 'dff'] }
         ]
     });
 
@@ -252,8 +252,9 @@ ipcMain.on('get-file-metadata', async (event, { filePath, pattern, fileIndex, to
             originalIndex: fileIndex
         });
     }
-    // 如果总文件数大于0，发送进度更新
-    if (totalFiles > 0) {
+    // 每次处理发送一次IPC通信进度更新
+    const progressBatchSize = 1;
+    if (totalFiles > 0 && (fileIndex + 1) % progressBatchSize === 0 || (fileIndex + 1) === totalFiles) {
         event.reply('progress-update', {
             current: fileIndex + 1,
             total: totalFiles,
