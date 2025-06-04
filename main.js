@@ -118,7 +118,7 @@ async function findAudioFilesInDirectory(dirPath) {
 
     // 定义支持的音频文件扩展名列表
     const audioExtensions = ['mp3', 'flac', 'ogg', 'm4a', 'aac', 'wma', 'wv', 'opus', 'dsf', 'dff'];
-    
+
     try {
         // 使用 fast-glob 进行快速文件搜索
         const files = await fastGlob(`**/*.{${audioExtensions.join(',')}}`, {

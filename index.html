@@ -397,6 +397,11 @@
             border-radius: var(--md-sys-shape-corner-small);
             box-shadow: var(--md-sys-elevation-level1);
         }
+        
+        /* 增加待处理文件卡片底部的空白 */
+        #fileList {
+            padding-bottom: 10px;
+        }
 
         #fileList {
             display: flex;
@@ -526,6 +531,84 @@
             background-color: var(--md-sys-color-on-surface-variant);
         }
 
+        /* 筛选按钮容器样式 */
+        .file-filter-buttons {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+            justify-content: flex-end;
+        }
+
+        /* 筛选按钮样式 */
+        .filter-btn {
+            position: relative;
+            overflow: hidden;
+            border: none;
+            outline: none;
+            background-color: var(--md-sys-color-surface-variant);
+            padding: 4px 10px; /* 减小内边距 */
+            font-size: 11px; /* 减小字体大小 */
+            font-weight: 500;
+            color: var(--md-sys-color-on-surface-variant);
+            border-radius: 4px; /* 减小圆角 */
+            transition: all ease 0.3s, box-shadow 0.1s ease-out;
+            box-shadow: 0px 2px 0px 0px rgba(162, 155, 254, 0.5); /* 减小阴影 */
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 4px; /* 减小间距 */
+        }
+        
+        /* 设置筛选按钮图标大小 */
+        .file-filter-buttons .filter-btn .icon {
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        /* 为ALL按钮设置更小的字体大小 */
+        #filter-all-btn .icon {
+            font-size: 0.8rem;
+        }
+
+        .filter-btn:active {
+            /* 保持按下时的阴影和位移效果与非ALL按钮一致 */
+            box-shadow: 0px 1px 0px 0px rgba(162, 155, 254, 0.5);
+            transform: translateY(2px);
+        }
+
+        .filter-btn.active {
+            /* 保持激活状态的背景色和文字颜色 */
+            background-color: #6c5ce7;
+            color: #fff;
+            /* 保持激活状态的阴影效果与非ALL按钮一致 */
+            box-shadow: 0px 2px 0px 0px rgba(162, 155, 254, 0.5);
+        }
+
+        .filter-btn::after {
+            content: "";
+            background: rgba(255, 255, 255, 0.4);
+            display: block;
+            position: absolute;
+            border-radius: 50%;
+            padding-top: 350%;
+            padding-left: 350%;
+            margin-left: -20px !important;
+            margin-top: -120%;
+            opacity: 0;
+            transition: all 0.8s ease-out;
+        }
+
+        .filter-btn:active::after {
+            padding-top: 0;
+            padding-left: 0;
+            margin-left: 0;
+            margin-top: 0;
+            opacity: 1;
+            transition: none;
+        }
+
         @media (max-width: 600px) {
             body {
                 padding: 16px;
@@ -563,6 +646,14 @@
             }
             .file-item-placeholder {
                 font-size: 14px;
+            }
+            .file-filter-buttons {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+            .filter-btn {
+                flex: 1;
+                min-width: 80px;
             }
         }
     </style>
@@ -605,6 +696,17 @@
 
         <div class="section-card">
             <h2><span class="icon" aria-hidden="true">📋</span>待处理文件:</h2>
+            <div class="file-filter-buttons">
+                <button id="filter-all-btn" class="filter-btn active">
+                    <span class="icon" aria-hidden="true">ALL</span>
+                </button>
+                <button id="filter-standard-btn" class="filter-btn">
+                    <span class="icon" aria-hidden="true">✓</span>
+                </button>
+                <button id="filter-nonstandard-btn" class="filter-btn">
+                    <span class="icon" aria-hidden="true">✗</span>
+                </button>
+            </div>
             <div id="fileList">
                 </div>
         </div>

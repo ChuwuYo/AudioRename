@@ -19,7 +19,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
             ipcRenderer.send(channel, data);
         }
     },
-    
+
     // 从主进程接收消息的方法
     receive: (channel, func) => {
         // 定义允许的接收通道
@@ -34,7 +34,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
             // 使用闭包保存原始函数
             const subscription = (event, ...args) => func(...args);
             ipcRenderer.on(channel, subscription);
-            
+
             // 返回取消订阅的函数
             return () => {
                 ipcRenderer.removeListener(channel, subscription);
@@ -54,7 +54,7 @@ contextBridge.exposeInMainWorld('pathUtils', {
         }
         return base;
     },
-    
+
     // 获取文件扩展名
     extname: (filepath) => {
         // 简单实现 extname 功能

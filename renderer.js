@@ -59,6 +59,7 @@ function logMessage(message, type = 'info', current = 0, total = 0) {
         if (existingProgress) {
             // 如果存在进度条，直接更新它
             if (updateProgressBar(current, total, message)) {
+                logDiv.appendChild(existingProgress);
                 return;
             }
         }
@@ -82,41 +83,41 @@ function logMessage(message, type = 'info', current = 0, total = 0) {
         iconSpan.textContent = '⚠️ ';
     } else if (type === 'progress') {
         iconSpan.textContent = '⏳ ';
-        
+
         // 如果是进度类型且有总数，添加进度条
         if (total > 0) {
             // 计算百分比，保留两位小数
             const percentage = Math.min(((current / total) * 100).toFixed(2), 100);
-            
+
             // 创建进度条容器
             const progressContainer = document.createElement('div');
             progressContainer.classList.add('progress-container');
-            
+
             // 创建进度条元素
             const progressBar = document.createElement('div');
             progressBar.classList.add('progress-bar');
             progressBar.style.width = `${percentage}%`;
-            
+
             // 将进度条添加到容器
             progressContainer.appendChild(progressBar);
-            
+
             // 将进度文本添加到消息后面
             const progressText = document.createElement('span');
             progressText.classList.add('progress-text');
             progressText.textContent = `${current}/${total} (${percentage}%)`;
             progressText.style.color = 'var(--md-sys-color-inverse-primary, #D0BCFF)';
-            
+
             // 为进度条元素设置唯一ID
             const progressId = 'progress-' + Date.now();
             p.id = progressId;
             currentProgressElementId = progressId;
-            
+
             // 将容器和进度信息添加到p元素
             p.appendChild(iconSpan);
             p.appendChild(document.createTextNode(message + ' '));
             p.appendChild(progressText);
             p.appendChild(progressContainer);
-            
+
             // 如果已完成100%，更改图标
             if (parseFloat(percentage) >= 99.99) {
                 iconSpan.textContent = '✓ ';
@@ -130,8 +131,8 @@ function logMessage(message, type = 'info', current = 0, total = 0) {
     }
 
     if (type !== 'progress' || total === 0) {
-    p.appendChild(iconSpan);
-    p.appendChild(document.createTextNode(message));
+        p.appendChild(iconSpan);
+        p.appendChild(document.createTextNode(message));
     }
 
     // 限制日志条目数量，保留最新的1000条
@@ -149,13 +150,17 @@ function logMessage(message, type = 'info', current = 0, total = 0) {
             logDiv.appendChild(p);
         }
     } else {
-    logDiv.appendChild(p);
+        logDiv.appendChild(p);
+        // 如果是进度条，始终将其移动到日志最下方
+        if (type === 'progress' && total > 0 && p.id) {
+            logDiv.appendChild(p);
+        }
     }
 
     // 智能滚动：只有当用户没有手动滚动时才自动滚动到底部
     const isScrolledToBottom = logDiv.scrollHeight - logDiv.clientHeight <= logDiv.scrollTop + 1;
     if (isScrolledToBottom) {
-    logDiv.scrollTop = logDiv.scrollHeight;
+        logDiv.scrollTop = logDiv.scrollHeight;
     }
 }
 
@@ -169,20 +174,20 @@ function logMessage(message, type = 'info', current = 0, total = 0) {
 function updateProgressBar(current, total, message) {
     // 计算百分比，确保不超过100%，保留两位小数
     const percentage = Math.min(((current / total) * 100).toFixed(2), 100);
-    
+
     // 如果存在进度条元素ID，则更新该元素
     if (currentProgressElementId && document.getElementById(currentProgressElementId)) {
         const progressElement = document.getElementById(currentProgressElementId);
         const progressBar = progressElement.querySelector('.progress-bar');
         const progressText = progressElement.querySelector('.progress-text');
         const iconSpan = progressElement.querySelector('.log-icon');
-        
+
         if (progressBar && progressText) {
             // 更新进度条宽度
             progressBar.style.width = `${percentage}%`;
             // 更新进度文本
             progressText.textContent = `${current}/${total} (${percentage}%)`;
-            
+
             // 当进度到达100%时，更新图标为完成标志
             if (parseFloat(percentage) >= 99.99) {
                 if (iconSpan) {
@@ -190,20 +195,20 @@ function updateProgressBar(current, total, message) {
                     iconSpan.style.color = 'var(--md-sys-color-tertiary)';
                 }
                 // 更新消息为完成状态
-                const textNode = Array.from(progressElement.childNodes).find(node => 
+                const textNode = Array.from(progressElement.childNodes).find(node =>
                     node.nodeType === Node.TEXT_NODE && node.textContent.trim() !== '');
                 if (textNode) {
                     textNode.nodeValue = ` 获取元数据完成 `;
                 }
             } else {
                 // 更新消息文本
-                const textNode = Array.from(progressElement.childNodes).find(node => 
+                const textNode = Array.from(progressElement.childNodes).find(node =>
                     node.nodeType === Node.TEXT_NODE && node.textContent.trim() !== '');
                 if (textNode) {
                     textNode.nodeValue = ` ${message} `;
                 }
             }
-            
+
             // 保持滚动条在底部
             logDiv.scrollTop = logDiv.scrollHeight;
             return true;
@@ -382,6 +387,186 @@ function toggleControls(disabled) {
     }
 }
 
+// 添加文件筛选相关变量
+let currentFileFilter = 'all'; // 默认显示所有文件
+const filterAllBtn = document.getElementById('filter-all-btn');
+const filterStandardBtn = document.getElementById('filter-standard-btn');
+const filterNonstandardBtn = document.getElementById('filter-nonstandard-btn');
+
+/**
+ * @function applyFileFilter
+ * @description 根据当前筛选条件过滤文件列表
+ */
+function applyFileFilter() {
+    const fileItems = fileListDiv.querySelectorAll('.file-item');
+
+    if (fileItems.length === 0) return; // 没有文件时不执行筛选
+
+    fileItems.forEach(item => {
+        const fileNameText = item.querySelector('.file-name-text').textContent;
+
+        if (currentFileFilter === 'all') {
+            // 显示所有文件
+            item.style.display = '';
+        } else if (currentFileFilter === 'standard') {
+            // 只显示名称符合标准的文件
+            if (fileNameText.includes('(名称符合标准)')) {
+                item.style.display = '';
+            } else {
+                item.style.display = 'none';
+            }
+        } else if (currentFileFilter === 'nonstandard') {
+            // 只显示名称不符合标准的文件
+            if (!fileNameText.includes('(名称符合标准)') && !fileNameText.includes('(等待元数据...)')) {
+                item.style.display = '';
+            } else {
+                item.style.display = 'none';
+            }
+        }
+    });
+
+    // 检查是否有可见的文件项
+    const visibleItems = Array.from(fileItems).filter(item => item.style.display !== 'none');
+
+    // 如果没有可见的文件项，显示提示信息
+    if (visibleItems.length === 0 && fileItems.length > 0) {
+        const placeholder = document.createElement('div');
+        placeholder.classList.add('file-item-placeholder');
+        placeholder.id = 'filter-placeholder';
+
+        const message = document.createElement('p');
+        if (currentFileFilter === 'standard') {
+            message.textContent = '没有名称符合标准的文件';
+        } else if (currentFileFilter === 'nonstandard') {
+            message.textContent = '没有名称不符合标准的文件';
+        }
+
+        placeholder.appendChild(message);
+
+        // 移除之前的占位符（如果有）
+        const existingPlaceholder = document.getElementById('filter-placeholder');
+        if (existingPlaceholder) {
+            existingPlaceholder.remove();
+        }
+
+        fileListDiv.appendChild(placeholder);
+    } else {
+        // 移除占位符（如果有）
+        const existingPlaceholder = document.getElementById('filter-placeholder');
+        if (existingPlaceholder) {
+            existingPlaceholder.remove();
+        }
+    }
+}
+
+/**
+ * @function updateFileList
+ * @description 更新文件列表的显示区域，根据文件元数据和重命名状态显示信息。
+ */
+function updateFileList() {
+    fileListDiv.innerHTML = ''; // 清空现有列表
+    const fragment = document.createDocumentFragment(); // 创建 DocumentFragment
+
+    // 如果没有文件，显示占位符信息
+    if (selectedFilePaths.length === 0) {
+        const placeholder = document.createElement('div');
+        placeholder.classList.add('file-item-placeholder');
+
+        const line1 = document.createElement('p');
+        line1.textContent = '未选择文件或目录';
+        placeholder.appendChild(line1);
+
+        const line2 = document.createElement('p');
+        line2.textContent = '支持的格式(要有元数据标签): ';
+        placeholder.appendChild(line2);
+
+        // 显示支持的音频格式
+        const formats = ['mp3', 'flac', 'ogg', 'm4a', 'aac', 'wma', 'wv', 'opus', 'dsf', 'dff'];
+        formats.forEach((format, index) => {
+            const codeSpan = document.createElement('code');
+            codeSpan.textContent = format;
+            line2.appendChild(codeSpan);
+            if (index < formats.length - 1) {
+                line2.appendChild(document.createTextNode(', '));
+            }
+        });
+
+        fragment.appendChild(placeholder); // 将占位符添加到 fragment
+        renameBtn.disabled = true; // 没有文件时禁用重命名按钮
+    } else {
+        // 根据原始索引对文件元数据进行排序，以保持文件列表顺序与选择顺序一致
+        // 注意：这里创建了一个副本进行排序，避免修改原始filesWithMetadata数组的顺序
+        const sortedFilesWithMetadata = [...filesWithMetadata].sort((a, b) => a.originalIndex - b.originalIndex);
+
+        // 遍历所有选中的文件路径，创建文件项
+        selectedFilePaths.forEach((filePath, index) => {
+            // 尝试从 sortedFilesWithMetadata 中找到当前文件的元数据，确保与原始索引匹配
+            const fileData = sortedFilesWithMetadata.find(f => f.originalIndex === index);
+            const div = document.createElement('div');
+            div.classList.add('file-item');
+
+            const icon = document.createElement('span');
+            icon.classList.add('icon');
+            icon.setAttribute('aria-hidden', 'true');
+
+            const textSpan = document.createElement('span');
+            textSpan.classList.add('file-name-text');
+            let currentFileName = path.basename(filePath); // 原始文件名
+
+            if (fileData) {
+                if (fileData.status === 'success') {
+                    icon.textContent = '🎵 ';
+                    div.classList.remove('pending', 'error'); // 移除待处理和错误样式
+                    div.style.borderColor = 'var(--md-sys-color-outline-variant)'; // 默认边框
+                    // 如果元数据获取成功，显示旧文件名 -> 新文件名
+                    textSpan.textContent = `${currentFileName} → ${fileData.cleanedFileName}`;
+                    if (currentFileName === fileData.cleanedFileName) {
+                        textSpan.textContent += " (名称符合标准)";
+                        div.style.borderColor = 'var(--md-sys-color-tertiary)'; // 名称符合标准时显示特殊边框
+                    }
+                } else if (fileData.status === 'error') {
+                    icon.textContent = '❌ '; // 错误图标
+                    div.classList.add('error'); // 添加错误样式类
+                    div.classList.remove('pending'); // 移除待处理样式
+                    // 如果元数据获取失败，显示错误信息
+                    const errorMsg = fileData.message ? fileData.message.substring(0, 50) + '...' : '未知错误';
+                    textSpan.textContent = `${currentFileName} (元数据读取失败: ${errorMsg})`;
+                    div.style.borderColor = 'var(--md-sys-color-error)'; // 错误时显示错误边框
+                } else {
+                    icon.textContent = '⏳ '; // 正在等待图标
+                    // 未知状态或正在等待元数据
+                    textSpan.textContent = currentFileName + " (等待元数据...)";
+                    div.classList.add('pending'); // 添加待处理样式类
+                    div.classList.remove('error'); // 移除错误样式
+                }
+            } else {
+                icon.textContent = '⏳ '; // 正在等待图标
+                // 文件还在等待元数据处理
+                textSpan.textContent = currentFileName + " (等待元数据...)";
+                div.classList.add('pending'); // 添加待处理样式类
+                div.classList.remove('error'); // 移除错误样式
+            }
+            div.appendChild(icon);
+            div.appendChild(textSpan);
+            fragment.appendChild(div); // 将文件项添加到 fragment
+        });
+
+        // 只有当所有文件的元数据都已处理，并且有文件被选中时，才启用重命名按钮
+        const allMetadataProcessed = filesWithMetadata.length === selectedFilePaths.length;
+        renameBtn.disabled = !allMetadataProcessed || selectedFilePaths.length === 0;
+
+        // 进一步判断：只有当有实际需要重命名的文件时才启用重命名按钮
+        if (!renameBtn.disabled) {
+            const hasFilesToRename = filesWithMetadata.some(f => f.status === 'success' && path.basename(f.filePath) !== f.cleanedFileName);
+            renameBtn.disabled = !hasFilesToRename;
+        }
+    }
+    fileListDiv.appendChild(fragment); // 一次性将 fragment 追加到 DOM
+
+    // 应用当前的筛选条件
+    applyFileFilter();
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     // 添加进度条样式
     const style = document.createElement('style');
@@ -438,7 +623,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     `;
     document.head.appendChild(style);
-    
+
     // 添加清理日志按钮（SVG图标）
     const clearLogBtn = document.createElement('button');
     clearLogBtn.id = 'clear-log-btn';
@@ -453,7 +638,47 @@ document.addEventListener('DOMContentLoaded', () => {
     clearLogBtn.addEventListener('click', clearLog);
     logDiv.parentElement.style.position = 'relative';
     logDiv.parentElement.appendChild(clearLogBtn);
-    
+
+    // 添加筛选按钮的事件监听器
+    filterAllBtn.addEventListener('click', () => {
+        // 更新按钮状态
+        filterAllBtn.classList.add('active');
+        filterStandardBtn.classList.remove('active');
+        filterNonstandardBtn.classList.remove('active');
+
+        // 更新当前筛选条件
+        currentFileFilter = 'all';
+
+        // 应用筛选
+        applyFileFilter();
+    });
+
+    filterStandardBtn.addEventListener('click', () => {
+        // 更新按钮状态
+        filterAllBtn.classList.remove('active');
+        filterStandardBtn.classList.add('active');
+        filterNonstandardBtn.classList.remove('active');
+
+        // 更新当前筛选条件
+        currentFileFilter = 'standard';
+
+        // 应用筛选
+        applyFileFilter();
+    });
+
+    filterNonstandardBtn.addEventListener('click', () => {
+        // 更新按钮状态
+        filterAllBtn.classList.remove('active');
+        filterStandardBtn.classList.remove('active');
+        filterNonstandardBtn.classList.add('active');
+
+        // 更新当前筛选条件
+        currentFileFilter = 'nonstandard';
+
+        // 应用筛选
+        applyFileFilter();
+    });
+
     logMessage('应用程序初始化。', 'info');
     toggleControls(false); // 初始时启用所有控件
     renameBtn.disabled = true; // 重命名按钮初始禁用
@@ -464,12 +689,12 @@ document.addEventListener('DOMContentLoaded', () => {
 selectDirBtn.addEventListener('click', () => {
     logMessage('请求选择目录...');
     toggleControls(true); // 禁用控件，防止重复操作
-    
+
     // 增加批次ID以区分新的操作
     currentBatchId++;
     // 重置状态变量
     allFilesProcessedMessageShown = false;
-    
+
     ipcRenderer.send('select-directory'); // 向主进程发送请求
 });
 
@@ -477,12 +702,12 @@ selectDirBtn.addEventListener('click', () => {
 selectFilesBtn.addEventListener('click', () => {
     logMessage('请求选择文件...');
     toggleControls(true); // 禁用控件
-    
+
     // 增加批次ID以区分新的操作
     currentBatchId++;
     // 重置状态变量
     allFilesProcessedMessageShown = false;
-    
+
     ipcRenderer.send('select-files'); // 向主进程发送请求
 });
 
@@ -501,12 +726,12 @@ renamePatternButton.addEventListener('rename-pattern-change', (event) => {
     toggleControls(true); // 禁用控件
     startProcessingIndicator('准备获取元数据...', 0, selectedFilePaths.length); // 使用新的处理指示器
     filesWithMetadata = []; // 清空已有的元数据，准备重新获取
-    
+
     // 增加批次ID以区分新的操作
     currentBatchId++;
     // 重置状态变量
     allFilesProcessedMessageShown = false;
-    
+
     updateFileList(); // 更新文件列表显示为"等待元数据"状态
 
     // 重新向主进程发送请求，获取所有选中文件的元数据
@@ -537,12 +762,12 @@ renameBtn.addEventListener('click', () => {
     logMessage(`准备重命名 ${filesToActuallyRename.length} 个文件...`, 'info');
     toggleControls(true); // 禁用控件
     startProcessingIndicator('开始重命名文件...', 0, filesToActuallyRename.length); // 使用新的处理指示器
-    
+
     // 增加批次ID以区分新的操作
     currentBatchId++;
     // 重置状态变量
     allFilesProcessedMessageShown = false;
-    
+
     // 准备发送给主进程的重命名任务载荷
     const payload = filesToActuallyRename.map(f => ({
         oldPath: f.filePath,
@@ -555,10 +780,10 @@ renameBtn.addEventListener('click', () => {
 ipcRenderer.on('selected-files-reply', (files) => {
     selectedFilePaths = files || []; // 更新选定的文件路径
     filesWithMetadata = []; // 清空之前的元数据
-    
+
     // 重置状态变量
     allFilesProcessedMessageShown = false;
-    
+
     if (selectedFilePaths.length > 0) {
         logMessage(`已选择 ${selectedFilePaths.length} 个文件。开始获取元数据...`);
         startProcessingIndicator('准备获取元数据...', 0, selectedFilePaths.length); // 使用新的处理指示器
@@ -617,12 +842,12 @@ ipcRenderer.on('file-metadata-result', (result) => {
     }
 
     // 如果所有文件的元数据都已获取，则重新启用控件
-    if (filesWithMetadata.length === selectedFilePaths.length && 
+    if (filesWithMetadata.length === selectedFilePaths.length &&
         selectedFilePaths.every((_, i) => filesWithMetadata.some(f => f.originalIndex === i))) {
-        
+
         // 确保显示100%的进度
         updateProcessingIndicator('获取元数据完成', selectedFilePaths.length, selectedFilePaths.length);
-        
+
         // 延迟显示完成消息，确保它在进度消息之后显示
         setTimeout(() => {
             if (!allFilesProcessedMessageShown) {
@@ -662,7 +887,7 @@ ipcRenderer.on('progress-update', (data) => {
         logMessage(data.message, 'progress');
         return;
     }
-    
+
     // 直接更新进度条，不再使用消息队列
     updateProcessingIndicator(data.message, data.current, data.total);
 });
