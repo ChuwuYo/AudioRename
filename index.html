@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <meta charset="UTF-8">
     <title>AudioRename</title>
@@ -77,17 +78,26 @@
             --md-sys-typescale-body-large-line-height: 24px;
 
             /* 新增或修改的用于悬停状态层的颜色变量 */
-            --md-sys-color-on-surface-alpha-08: rgba(28, 27, 31, 0.08); /* on-surface 的 8% 透明度 */
-            --md-sys-color-primary-alpha-08: rgba(103, 80, 164, 0.08); /* primary 的 8% 透明度 */
+            --md-sys-color-on-surface-alpha-08: rgba(28, 27, 31, 0.08);
+            /* on-surface 的 8% 透明度 */
+            --md-sys-color-primary-alpha-08: rgba(103, 80, 164, 0.08);
+            /* primary 的 8% 透明度 */
 
             /* 用于按钮和下拉菜单的通用变量 */
-            --button-height: 36px; /* 约等于 h-9 */
-            --button-padding-x: 16px; /* 约等于 px-4 */
-            --button-padding-y: 8px; /* 约等于 py-2 */
-            --button-font-size: 14px; /* text-sm */
-            --button-font-weight: 500; /* font-medium */
-            --button-border-radius: var(--md-sys-shape-corner-small); /* rounded-lg */
-            --button-shadow-color: rgba(0, 0, 0, 0.03); /* shadow-black/5 */
+            --button-height: 36px;
+            /* 约等于 h-9 */
+            --button-padding-x: 16px;
+            /* 约等于 px-4 */
+            --button-padding-y: 8px;
+            /* 约等于 py-2 */
+            --button-font-size: 14px;
+            /* text-sm */
+            --button-font-weight: 500;
+            /* font-medium */
+            --button-border-radius: var(--md-sys-shape-corner-small);
+            /* rounded-lg */
+            --button-shadow-color: rgba(0, 0, 0, 0.03);
+            /* shadow-black/5 */
         }
 
         body {
@@ -123,14 +133,24 @@
             text-align: center;
             margin: 0 0 16px 0;
         }
+
         h1 .icon {
             display: inline-block;
             animation: sparkleShine 2s infinite ease-in-out;
         }
 
         @keyframes sparkleShine {
-            0%, 100% { transform: scale(1); opacity: 1; }
-            50% { transform: scale(1.2) rotate(10deg); opacity: 0.8; }
+
+            0%,
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+
+            50% {
+                transform: scale(1.2) rotate(10deg);
+                opacity: 0.8;
+            }
         }
 
 
@@ -146,6 +166,7 @@
             align-items: center;
             gap: 8px;
         }
+
         h2 .icon {
             font-size: 1.2em;
             color: var(--md-sys-color-secondary);
@@ -163,8 +184,10 @@
         }
 
         button {
-            position: relative; /* 为波纹效果添加 */
-            overflow: hidden; /* 隐藏超出按钮边界的波纹 */
+            position: relative;
+            /* 为波纹效果添加 */
+            overflow: hidden;
+            /* 隐藏超出按钮边界的波纹 */
             border: none;
             outline: none;
             background-color: #6c5ce7;
@@ -173,7 +196,8 @@
             font-weight: 700;
             color: #fff;
             border-radius: 5px;
-            transition: all ease 0.3s, box-shadow 0.1s ease-out; /* 更新 transition */
+            transition: all ease 0.3s, box-shadow 0.1s ease-out;
+            /* 更新 transition */
             box-shadow: 0px 5px 0px 0px #a29bfe;
             cursor: pointer;
             display: flex;
@@ -183,8 +207,8 @@
         }
 
         button:active {
-            box-shadow: 0px 2px 0px 0px #a29bfe; /* 调整 active 状态的阴影，使其看起来被按下 */
-            transform: translateY(3px); /* 轻微下移，增强按下感 */
+            box-shadow: 0px 2px 0px 0px #a29bfe;
+            transform: translateY(3px);
         }
 
         /* 波纹效果 */
@@ -208,7 +232,7 @@
             margin-left: 0;
             margin-top: 0;
             opacity: 1;
-            transition: none; /* 点击时立即显示波纹 */
+            transition: none;
         }
 
         button:disabled {
@@ -221,7 +245,7 @@
         button .icon {
             font-size: 18px;
         }
-        
+
         .rename-pattern-container {
             display: flex;
             align-items: center;
@@ -230,6 +254,7 @@
             justify-content: center;
             flex-wrap: wrap;
         }
+
         .rename-pattern-container label {
             font-size: 14px;
             color: var(--md-sys-color-on-surface-variant);
@@ -240,100 +265,137 @@
             position: relative;
             display: inline-block;
             min-width: 200px;
-            z-index: 10; /* 确保下拉菜单在其他内容之上 */
+            z-index: 10;
+            /* 确保下拉菜单在其他内容之上 */
         }
 
         .dropdown-trigger {
             display: inline-flex;
             align-items: center;
-            justify-content: space-between; /* 使文本和图标两端对齐 */
+            justify-content: space-between;
+            /* 使文本和图标两端对齐 */
             white-space: nowrap;
             border-radius: var(--button-border-radius);
             font-size: var(--button-font-size);
             font-weight: var(--button-font-weight);
             transition: color var(--md-sys-motion-duration-short2) var(--md-sys-motion-easing-standard),
-                        background-color var(--md-sys-motion-duration-short2) var(--md-sys-motion-easing-standard),
-                        border-color var(--md-sys-motion-duration-short2) var(--md-sys-motion-easing-standard),
-                        box-shadow var(--md-sys-motion-duration-short2) var(--md-sys-motion-easing-standard);
-            outline-offset: 2px; /* 焦点轮廓偏移 */
-            outline: none; /* 移除默认 outline */
-            
-            border: 1px solid var(--md-sys-color-outline); /* border border-input */
-            background-color: var(--md-sys-color-surface); /* bg-background */
-            color: var(--md-sys-color-on-surface); /* 文本颜色 */
-            box-shadow: 0px 1px 2px var(--button-shadow-color); /* shadow-sm shadow-black/5 */
+                background-color var(--md-sys-motion-duration-short2) var(--md-sys-motion-easing-standard),
+                border-color var(--md-sys-motion-duration-short2) var(--md-sys-motion-easing-standard),
+                box-shadow var(--md-sys-motion-duration-short2) var(--md-sys-motion-easing-standard);
+            outline-offset: 2px;
+            /* 焦点轮廓偏移 */
+            outline: none;
+            /* 移除默认 outline */
+
+            border: 1px solid var(--md-sys-color-outline);
+            /* border border-input */
+            background-color: var(--md-sys-color-surface);
+            /* bg-background */
+            color: var(--md-sys-color-on-surface);
+            /* 文本颜色 */
+            box-shadow: 0px 1px 2px var(--button-shadow-color);
+            /* shadow-sm shadow-black/5 */
             height: var(--button-height);
             padding: var(--button-padding-y) var(--button-padding-x);
             cursor: pointer;
-            width: 100%; /* 填充父容器 */
-            box-sizing: border-box; /* 包含 padding 和 border */
+            width: 100%;
+            /* 填充父容器 */
+            box-sizing: border-box;
+            /* 包含 padding 和 border */
         }
 
         /* 悬停效果 */
         .dropdown-trigger:hover {
-            background-color: var(--md-sys-color-surface-variant); /* hover:bg-accent (M3: surface-variant) */
-            color: var(--md-sys-color-on-surface-variant); /* hover:text-accent-foreground (M3: on-surface-variant) */
-            border-color: var(--md-sys-color-outline); /* 悬停时边框通常不变 */
-            box-shadow: var(--md-sys-elevation-level2); /* 轻微提升阴影 */
+            background-color: var(--md-sys-color-surface-variant);
+            /* hover:bg-accent (M3: surface-variant) */
+            color: var(--md-sys-color-on-surface-variant);
+            /* hover:text-accent-foreground (M3: on-surface-variant) */
+            border-color: var(--md-sys-color-outline);
+            /* 悬停时边框通常不变 */
+            box-shadow: var(--md-sys-elevation-level2);
+            /* 轻微提升阴影 */
         }
 
         /* 焦点可见轮廓 */
         .dropdown-trigger:focus-visible {
-            outline: 2px solid var(--md-sys-color-primary); /* focus-visible:outline-2 focus-visible:outline-ring/70 */
+            outline: 2px solid var(--md-sys-color-primary);
+            /* focus-visible:outline-2 focus-visible:outline-ring/70 */
             outline-offset: 2px;
-            border-color: var(--md-sys-color-primary); /* 焦点时边框变为主题色 */
-            box-shadow: 0 0 0 4px var(--md-sys-color-primary-container); /* 焦点光晕 */
+            border-color: var(--md-sys-color-primary);
+            /* 焦点时边框变为主题色 */
+            box-shadow: 0 0 0 4px var(--md-sys-color-primary-container);
+            /* 焦点光晕 */
         }
 
         /* 激活状态 */
         .dropdown-trigger[data-state="open"] {
-             background-color: var(--md-sys-color-primary-container); /* 打开时背景变为 primary container */
-             color: var(--md-sys-color-on-primary-container); /* 打开时文本变为 on primary container */
-             border-color: var(--md-sys-color-primary); /* 打开时边框变为 primary */
-             box-shadow: var(--md-sys-elevation-level2); /* 打开时保持提升阴影 */
+            background-color: var(--md-sys-color-primary-container);
+            /* 打开时背景变为 primary container */
+            color: var(--md-sys-color-on-primary-container);
+            /* 打开时文本变为 on primary container */
+            border-color: var(--md-sys-color-primary);
+            /* 打开时边框变为 primary */
+            box-shadow: var(--md-sys-elevation-level2);
+            /* 打开时保持提升阴影 */
         }
 
         .dropdown-trigger svg {
-            margin-left: 8px; /* ms-2 */
-            margin-right: -4px; /* -me-1 (考虑到 px-4，这里调整一下) */
+            margin-left: 8px;
+            /* ms-2 */
+            margin-right: -4px;
+            /* -me-1 (考虑到 px-4，这里调整一下) */
             opacity: 0.6;
             transition: transform var(--md-sys-motion-duration-short2) var(--md-sys-motion-easing-standard), opacity var(--md-sys-motion-duration-short2) var(--md-sys-motion-easing-standard);
         }
 
         .dropdown-trigger[data-state="open"] svg {
-            transform: rotate(180deg); /* 打开时箭头旋转 */
+            transform: rotate(180deg);
+            /* 打开时箭头旋转 */
             opacity: 1;
-            color: var(--md-sys-color-on-primary-container); /* 打开时箭头颜色跟随文本 */
+            color: var(--md-sys-color-on-primary-container);
+            /* 打开时箭头颜色跟随文本 */
         }
+
         .dropdown-trigger:hover svg {
-            color: var(--md-sys-color-on-surface-variant); /* 悬停时箭头颜色 */
+            color: var(--md-sys-color-on-surface-variant);
+            /* 悬停时箭头颜色 */
         }
+
         .dropdown-trigger:focus-visible svg {
-            color: var(--md-sys-color-primary); /* 焦点时箭头颜色 */
+            color: var(--md-sys-color-primary);
+            /* 焦点时箭头颜色 */
         }
 
 
         .dropdown-content {
             position: absolute;
-            top: calc(100% + 8px); /* 位于按钮下方，有间距 */
+            top: calc(100% + 8px);
+            /* 位于按钮下方，有间距 */
             left: 0;
             background-color: var(--md-sys-color-surface);
-            border-radius: var(--md-sys-shape-corner-medium); /* 圆角 */
-            box-shadow: var(--md-sys-elevation-level3); /* 更高的阴影表示浮动 */
-            min-width: 100%; /* 宽度与按钮保持一致 */
+            border-radius: var(--md-sys-shape-corner-medium);
+            /* 圆角 */
+            box-shadow: var(--md-sys-elevation-level3);
+            /* 更高的阴影表示浮动 */
+            min-width: 100%;
+            /* 宽度与按钮保持一致 */
             padding: 8px;
-            display: none; /* 默认隐藏 */
+            display: none;
+            /* 默认隐藏 */
             flex-direction: column;
-            gap: 4px; /* 选项之间的间距 */
-            z-index: 11; /* 确保在按钮和状态层之上 */
+            gap: 4px;
+            /* 选项之间的间距 */
+            z-index: 11;
+            /* 确保在按钮和状态层之上 */
             opacity: 0;
             transform: translateY(-10px);
             transition: opacity var(--md-sys-motion-duration-medium1) var(--md-sys-motion-easing-decelerate),
-                        transform var(--md-sys-motion-duration-medium1) var(--md-sys-motion-easing-decelerate);
+                transform var(--md-sys-motion-duration-medium1) var(--md-sys-motion-easing-decelerate);
         }
 
         .dropdown-content.open {
-            display: flex; /* 显示 */
+            display: flex;
+            /* 显示 */
             opacity: 1;
             transform: translateY(0);
         }
@@ -347,10 +409,13 @@
             font-size: var(--button-font-size);
             cursor: pointer;
             transition: background-color var(--md-sys-motion-duration-short2) var(--md-sys-motion-easing-standard),
-                        color var(--md-sys-motion-duration-short2) var(--md-sys-motion-easing-standard);
-            position: relative; /* 用于状态层 */
-            overflow: hidden; /* 裁剪掉超出边框的伪元素 */
+                color var(--md-sys-motion-duration-short2) var(--md-sys-motion-easing-standard);
+            position: relative;
+            /* 用于状态层 */
+            overflow: hidden;
+            /* 裁剪掉超出边框的伪元素 */
         }
+
         .dropdown-item::before {
             content: '';
             position: absolute;
@@ -368,26 +433,34 @@
         /* 选项悬停和焦点效果 */
         .dropdown-item:hover::before,
         .dropdown-item:focus-visible::before {
-            background-color: var(--md-sys-color-on-surface-alpha-08); /* 悬停和焦点状态层 */
+            background-color: var(--md-sys-color-on-surface-alpha-08);
+            /* 悬停和焦点状态层 */
         }
 
         .dropdown-item:hover {
-            color: var(--md-sys-color-on-surface); /* 悬停时文本颜色不变 */
+            color: var(--md-sys-color-on-surface);
+            /* 悬停时文本颜色不变 */
         }
 
         .dropdown-item:focus-visible {
-            outline: none; /* 移除默认焦点轮廓 */
-            color: var(--md-sys-color-primary); /* 焦点时文本颜色变为主题色 */
-            background-color: var(--md-sys-color-primary-container); /* 焦点时背景色变为主题容器色 */
+            outline: none;
+            /* 移除默认焦点轮廓 */
+            color: var(--md-sys-color-primary);
+            /* 焦点时文本颜色变为主题色 */
+            background-color: var(--md-sys-color-primary-container);
+            /* 焦点时背景色变为主题容器色 */
         }
+
         /* 选中状态 */
         .dropdown-item.selected {
             background-color: var(--md-sys-color-primary-container);
             color: var(--md-sys-color-on-primary-container);
             font-weight: 500;
         }
+
         .dropdown-item.selected::before {
-             background-color: transparent; /* 选中状态不再显示状态层 */
+            background-color: transparent;
+            /* 选中状态不再显示状态层 */
         }
 
 
@@ -397,7 +470,7 @@
             border-radius: var(--md-sys-shape-corner-small);
             box-shadow: var(--md-sys-elevation-level1);
         }
-        
+
         /* 增加待处理文件卡片底部的空白 */
         #fileList {
             padding-bottom: 10px;
@@ -412,6 +485,7 @@
             overflow-y: auto;
             padding-right: 4px;
         }
+
         .file-item-placeholder {
             color: var(--md-sys-color-on-surface-variant);
             padding: 12px 16px;
@@ -423,10 +497,12 @@
             align-items: center;
             height: 100%;
         }
+
         .file-item-placeholder p {
             margin: 2px 0;
             line-height: 1.4;
         }
+
         .file-item-placeholder code {
             background-color: var(--md-sys-color-surface-variant);
             color: var(--md-sys-color-on-surface-variant);
@@ -449,8 +525,9 @@
             align-items: center;
             gap: 10px;
             transition: background-color var(--md-sys-motion-duration-short2) var(--md-sys-motion-easing-standard),
-                        border-color var(--md-sys-motion-duration-short2) var(--md-sys-motion-easing-standard);
+                border-color var(--md-sys-motion-duration-short2) var(--md-sys-motion-easing-standard);
         }
+
         .file-item .icon {
             color: var(--md-sys-color-primary);
         }
@@ -462,9 +539,11 @@
             color: var(--md-sys-color-on-surface-variant);
             opacity: 0.8;
         }
+
         .file-item.pending .icon {
             color: var(--md-sys-color-outline);
         }
+
         /* 新增：元数据读取失败文件的图标颜色 */
         .file-item.error .icon {
             color: var(--md-sys-color-error);
@@ -476,6 +555,7 @@
             color: var(--md-sys-color-on-primary-container);
             border-color: var(--md-sys-color-primary);
         }
+
         .file-item:hover .icon {
             color: var(--md-sys-color-on-primary-container);
         }
@@ -502,31 +582,43 @@
             animation: fadeInLogEntry var(--md-sys-motion-duration-medium1) var(--md-sys-motion-easing-decelerate) forwards;
             animation-delay: calc(var(--index, 0) * 50ms);
         }
+
         #log p:nth-child(odd) {
             background-color: rgba(255, 255, 255, 0.07);
         }
+
         #log p .log-icon {
             margin-right: 8px;
         }
 
         @keyframes fadeInLogEntry {
-            from { opacity: 0; transform: translateY(8px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(8px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         ::-webkit-scrollbar {
             width: 8px;
             height: 8px;
         }
+
         ::-webkit-scrollbar-track {
             background-color: transparent;
         }
+
         ::-webkit-scrollbar-thumb {
             background-color: var(--md-sys-color-outline);
             border-radius: var(--md-sys-shape-corner-full);
             border: 2px solid transparent;
             background-clip: padding-box;
         }
+
         ::-webkit-scrollbar-thumb:hover {
             background-color: var(--md-sys-color-on-surface-variant);
         }
@@ -546,19 +638,24 @@
             border: none;
             outline: none;
             background-color: var(--md-sys-color-surface-variant);
-            padding: 4px 10px; /* 减小内边距 */
-            font-size: 11px; /* 减小字体大小 */
+            padding: 4px 10px;
+            /* 减小内边距 */
+            font-size: 11px;
+            /* 减小字体大小 */
             font-weight: 500;
             color: var(--md-sys-color-on-surface-variant);
-            border-radius: 4px; /* 减小圆角 */
+            border-radius: 4px;
+            /* 减小圆角 */
             transition: all ease 0.3s, box-shadow 0.1s ease-out;
-            box-shadow: 0px 2px 0px 0px rgba(162, 155, 254, 0.5); /* 减小阴影 */
+            box-shadow: 0px 2px 0px 0px rgba(162, 155, 254, 0.5);
+            /* 减小阴影 */
             cursor: pointer;
             display: flex;
             align-items: center;
-            gap: 4px; /* 减小间距 */
+            gap: 4px;
+            /* 减小间距 */
         }
-        
+
         /* 设置筛选按钮图标大小 */
         .file-filter-buttons .filter-btn .icon {
             font-size: 0.9rem;
@@ -566,10 +663,9 @@
             align-items: center;
             justify-content: center;
         }
-        
-        /* 为ALL按钮设置更小的字体大小 */
+
         #filter-all-btn .icon {
-            font-size: 0.8rem;
+            font-size: 0.9rem;
         }
 
         .filter-btn:active {
@@ -614,43 +710,56 @@
                 padding: 16px;
                 min-height: calc(100vh - 32px);
             }
+
             .app-container {
                 padding: 16px;
                 gap: 20px;
                 border-radius: var(--md-sys-shape-corner-extra-large);
             }
+
             h1 {
                 font-size: 28px;
                 line-height: 36px;
             }
+
             h2 {
                 font-size: 20px;
             }
-            #controls, .rename-pattern-container {
+
+            #controls,
+            .rename-pattern-container {
                 flex-direction: column;
                 align-items: stretch;
             }
-            button, .custom-dropdown-container {
+
+            button,
+            .custom-dropdown-container {
                 width: 100%;
                 box-sizing: border-box;
             }
+
             .dropdown-trigger {
                 width: 100%;
             }
+
             .dropdown-content {
                 width: 100%;
             }
+
             .file-item {
                 padding: 10px 12px;
                 border-radius: var(--md-sys-shape-corner-medium);
             }
+
             .file-item-placeholder {
                 font-size: 14px;
             }
+
             .file-filter-buttons {
                 flex-wrap: wrap;
                 justify-content: center;
             }
+
             .filter-btn {
                 flex: 1;
                 min-width: 80px;
@@ -658,6 +767,7 @@
         }
     </style>
 </head>
+
 <body>
     <div class="app-container">
         <h1><span class="icon" aria-hidden="true">✨</span> 音频文件重命名工具 <span class="icon" aria-hidden="true">✨</span></h1>
@@ -680,9 +790,14 @@
         <div class="rename-pattern-container">
             <label for="rename-pattern-button">命名模式:</label>
             <div class="custom-dropdown-container">
-                <button class="dropdown-trigger" type="button" id="rename-pattern-button" aria-haspopup="menu" aria-expanded="false" data-state="closed">
+                <button class="dropdown-trigger" type="button" id="rename-pattern-button" aria-haspopup="menu"
+                    aria-expanded="false" data-state="closed">
                     <span id="selected-pattern-text">艺术家 - 歌曲名 (默认)</span>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="dropdown" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                        class="dropdown" aria-hidden="true">
+                        <path d="m6 9 6 6 6-6"></path>
+                    </svg>
                 </button>
 
                 <div class="dropdown-content" id="rename-pattern-dropdown">
@@ -708,7 +823,7 @@
                 </button>
             </div>
             <div id="fileList">
-                </div>
+            </div>
         </div>
 
         <div class="section-card">
@@ -834,4 +949,5 @@
     </script>
     <script src="renderer.js"></script>
 </body>
+
 </html>
