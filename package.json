@@ -2,6 +2,7 @@
   "name": "audiorename",
   "version": "0.1.0",
   "main": "main.js",
+  "description": "批量重命名音频文件工具，支持多种音频格式",
   "scripts": {
     "start": "electron .",
     "pack": "electron-builder --dir",
@@ -20,6 +21,8 @@
     "appId": "com.yourcompany.audiorename",
     "productName": "AudioRename",
     "copyright": "Copyright © 2025 ChuwuYo",
+    "asar": true,
+    "asarUnpack": ["node_modules/music-metadata/**/*"],
     "files": [
       "**/*",
       "!{**/node_modules/*/{CHANGELOG.md,README.md,README.*.md,LICENCE,LICENSE,SECURITY.md}}",
@@ -28,7 +31,28 @@
       "!**/*.{iml,o,hprof,orig,pyc,pyo,rbc,swp,csproj,fsproj,sln,suo,xproj}",
       "!**/.{.*,DS_Store,git,hg,svn,idea,vs,yarn-cache,yarn-error.log,eslintcache,prettierignore,editorconfig}",
       "!**/build/**/*.gz",
-      "!**/build/**/*.map"
+      "!**/build/**/*.map",
+      "!**/__tests__/**",
+      "!**/*.{spec,test}.{js,jsx,ts,tsx}",
+      "!**/test/**"
+    ],
+    "extraResources": [
+      {
+        "from": "assets",
+        "to": "assets"
+      }
+    ],
+    "fileAssociations": [
+      { "ext": "mp3", "name": "MP3 Audio", "description": "MP3 音频文件" },
+      { "ext": "flac", "name": "FLAC Audio", "description": "无损音频文件" },
+      { "ext": "ogg", "name": "OGG Audio", "description": "OGG 音频文件" },
+      { "ext": "m4a", "name": "M4A Audio", "description": "M4A 音频文件" },
+      { "ext": "aac", "name": "AAC Audio", "description": "AAC 音频文件" },
+      { "ext": "wma", "name": "WMA Audio", "description": "Windows Media 音频文件" },
+      { "ext": "wv", "name": "WavPack Audio", "description": "WavPack 音频文件" },
+      { "ext": "opus", "name": "Opus Audio", "description": "Opus 音频文件" },
+      { "ext": "dsf", "name": "DSF Audio", "description": "DSD 音频文件" },
+      { "ext": "dff", "name": "DFF Audio", "description": "DSD 音频文件" }
     ],
     "win": {
       "target": [
@@ -37,7 +61,9 @@
       ],
       "requestedExecutionLevel": "asInvoker",
       "icon": "assets/music.ico",
-      "compression": "maximum"
+      "compression": "maximum",
+      "legalTrademarks": "ChuwuYo",
+      "artifactName": "${productName}-${version}-${arch}.${ext}"
     },
     "nsis": {
       "oneClick": false,
@@ -50,5 +76,9 @@
       "artifactName": "${productName} ${version} Portable.${ext}"
     }
   },
-  "displayName": "音频批量重命名工具"
+  "displayName": "音频批量重命名工具",
+  "keywords": ["audio", "rename", "mp3", "flac", "music", "metadata", "tag", "批量重命名", "音频处理"],
+  "author": "ChuwuYo",
+  "license": "MIT",
+  "supportedAudioFormats": ["mp3", "flac", "ogg", "m4a", "aac", "wma", "wv", "opus", "dsf", "dff"]
 }
