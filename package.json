@@ -1,6 +1,6 @@
 {
   "name": "audiorename",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "main": "main.js",
   "description": "批量重命名音频文件工具，支持多种音频格式",
   "scripts": {
@@ -23,6 +23,7 @@
     "copyright": "Copyright © 2025 ChuwuYo",
     "asar": true,
     "asarUnpack": ["node_modules/music-metadata/**/*"],
+    "npmRebuild": false,
     "files": [
       "**/*",
       "!{**/node_modules/*/{CHANGELOG.md,README.md,README.*.md,LICENCE,LICENSE,SECURITY.md}}",
@@ -51,8 +52,8 @@
       { "ext": "wma", "name": "WMA Audio", "description": "Windows Media 音频文件" },
       { "ext": "wv", "name": "WavPack Audio", "description": "WavPack 音频文件" },
       { "ext": "opus", "name": "Opus Audio", "description": "Opus 音频文件" },
-      { "ext": "dsf", "name": "DSF Audio", "description": "DSD 音频文件" },
-      { "ext": "dff", "name": "DFF Audio", "description": "DSD 音频文件" }
+      { "ext": "dsf", "name": "DSF Audio", "description": "DSD 音频文件 (DSF)" },
+      { "ext": "dff", "name": "DFF Audio", "description": "DSD 音频文件 (DFF)" }
     ],
     "win": {
       "target": [
