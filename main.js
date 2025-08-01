@@ -69,13 +69,21 @@ const createMainWindow = () => {
         height: 800,
         minWidth: 800,
         minHeight: 600,
+         show: false, // 初始不显示窗口，等内容加载完成后再显示
         webPreferences: {
             nodeIntegration: false,    // 禁用直接在渲染进程中使用 Node.js API
             contextIsolation: true,    // 启用上下文隔离
-            preload: path.join(__dirname, 'preload.js') // 配置预加载脚本
+            preload: path.join(__dirname, 'preload.js'), // 配置预加载脚本
+            webSecurity: false, // 允许本地资源加载，提高启动速度
+            backgroundThrottling: false // 防止后台节流影响性能
         },
         autoHideMenuBar: true,
         icon: path.join(__dirname, 'assets', 'Music.ico')
+    });
+
+    // 当DOM内容加载完成时显示窗口，避免白屏
+    mainWindow.webContents.once('dom-ready', () => {
+        mainWindow.show();
     });
 
     mainWindow.loadFile('index.html');
@@ -220,8 +228,13 @@ ipcMain.on('select-files', async (event) => {
  */
 ipcMain.on('get-file-metadata', async (event, { filePath, pattern, fileIndex, totalFiles }) => {
     try {
-        // 使用 music-metadata 库解析文件元数据,添加 skipCovers: true 避免读取封面图片
-        const metadata = await mm.parseFile(filePath, { duration: false, skipCovers: true });
+        // 使用 music-metadata 库解析文件元数据,添加优化选项提高解析速度
+        const metadata = await mm.parseFile(filePath, { 
+            duration: false,        // 不读取时长信息
+            skipCovers: true,       // 不读取封面图片
+            skipPostHeaders: true,  // 跳过后续头部信息
+            includeChapters: false  // 不包含章节信息
+        });
         // 获取艺术家和标题，如果不存在则使用默认值
         const artist = metadata.common.artist || '未知艺术家';
         const title = metadata.common.title || '未知标题';
